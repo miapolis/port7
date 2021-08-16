@@ -1,0 +1,13 @@
+{
+  "name": "port7",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "dock",
+      "wharf"
+    ],
+    "nohoist": [
+      "**"
+    ]
+  }
+}

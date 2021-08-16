@@ -3,7 +3,10 @@ defmodule Harbor do
 
   @impl true
   def start(_type, _args) do
+    IO.puts("Starting port7...")
+
     children = [
+      Anchorage.Supervisors.UserSession,
       Plug.Cowboy.child_spec(
         scheme: :http,
         plug: Broth,
@@ -16,6 +19,7 @@ defmodule Harbor do
     ]
 
     opts = [strategy: :one_for_one, name: Harbor.Supervisor]
+
     Supervisor.start_link(children, opts)
   end
 

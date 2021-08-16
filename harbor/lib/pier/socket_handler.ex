@@ -1,4 +1,4 @@
-defmodule Pier.SockerHandler do
+defmodule Pier.SocketHandler do
   require Logger
 
   defstruct ip: nil
@@ -16,6 +16,8 @@ defmodule Pier.SockerHandler do
     state = %__MODULE__{
       ip: ip
     }
+
+    Anchorage.UserSession.start_supervised(user_id: "1", ip: ip)
 
     {:cowboy_websocket, request, state}
   end

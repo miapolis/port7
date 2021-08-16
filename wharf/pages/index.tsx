@@ -1,8 +1,9 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import { PageComponent } from '../types/page-component'
 
-export default function Home() {
+const HomePage: PageComponent<unknown> = () => {
   return (
     <div className={styles.container}>
       <Head>
@@ -67,3 +68,7 @@ export default function Home() {
     </div>
   )
 }
+
+HomePage.ws = true;
+
+export default HomePage;
