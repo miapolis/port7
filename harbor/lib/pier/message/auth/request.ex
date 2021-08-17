@@ -4,12 +4,14 @@ defmodule Pier.Message.Auth.Request do
 
   @primary_key false
   embedded_schema do
+    field(:nickname, :string)
   end
 
   def changeset(intializer \\ %__MODULE__{}, data) do
     intializer
-    |> cast(data, [])
-    |> validate_required([])
+    |> cast(data, [:nickname])
+    |> validate_required([:nickname])
+    |> validate_length(:nickname, min: 2, max: 20)
   end
 
   defmodule Reply do

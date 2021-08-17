@@ -11,14 +11,14 @@ const HomePage: PageComponent<unknown> = () => {
   React.useEffect(() => {
     const fun = async () => {
       if (!conn) return;
-      let result: any = await conn.sendCall("auth:request", {});
-      console.log(result.data.message);
+      let result: any = await conn.sendCall("auth:request", {nickname: "Joe"});
       let room: any = await conn.sendCall("room:create", {
         name: "MYROOM",
         isPrivate: true,
         game: "rumble",
       });
       console.log("ROOM", room.data.message);
+      conn.sendCast("chat:send_msg", {tokens: [{t: "text", v: "Hello World!"}]})
     };
     fun();
   }, [conn]);

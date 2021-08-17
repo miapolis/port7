@@ -2,13 +2,19 @@ defmodule Anchorage.UserSession do
   use GenServer, restart: :temporary
 
   defmodule State do
+    @derive {Jason.Encoder, only: [:nickname]}
+
     @type t :: %__MODULE__{
             user_id: String.t(),
+            nickname: String.t(),
+            current_room_id: String.t(),
             ip: String.t(),
             pid: pid()
           }
 
     defstruct user_id: nil,
+              nickname: nil,
+              current_room_id: nil,
               ip: nil,
               pid: nil
   end
@@ -19,7 +25,7 @@ defmodule Anchorage.UserSession do
   defp call(user_id, params), do: GenServer.call(via(user_id), params)
 
   def start_supervised(values) do
-    IO.puts("creating new user #{values[:user_id]} (#{count()})")
+    IO.puts("creating new user #{values[:nickname]} (#{count()})")
 
     case DynamicSupervisor.start_child(
            Anchorage.UserSessionDynamicSupervisor,
@@ -42,6 +48,28 @@ defmodule Anchorage.UserSession do
 
   ### - API - #########################################################################
 
+  def set_state(user_id, info), do: cast(user_id, {:set_state, info})
+
+  defp set_state_impl(info, state) do
+    {:noreply, Map.merge(state, info)}
+  end
+
+  def get_state(user_id), do: call(user_id, {:get_state})
+
+  defp get_state_impl(_reply, state) do
+    {:reply, state, state}
+  end
+
+  def get(user_id, key), do: call(user_id, {:get, key})
+
+  defp get_impl(key, _reply, state) do
+    {:reply, Map.get(state, key), state}
+  end
+
+  def get_current_room_id(user_id) do
+    get(user_id, :current_room_id)
+  end
+
   def send_ws(user_id, platform, msg), do: cast(user_id, {:send_ws, platform, msg})
 
   defp send_ws_impl(_platform, msg, state = %{pid: pid}) do
@@ -61,6 +89,10 @@ defmodule Anchorage.UserSession do
     {:reply, :ok, %{state | pid: pid}}
   end
 
+  def set_current_room_id(user_id, current_room_id) do
+    set_state(user_id, %{current_room_id: current_room_id})
+  end
+
   def init(init) do
     {:ok, struct(State, init)}
   end
@@ -75,8 +107,11 @@ defmodule Anchorage.UserSession do
   ### - ROUTER - ######################################################################
 
   def handle_cast({:send_ws, platform, msg}, state), do: send_ws_impl(platform, msg, state)
+  def handle_cast({:set_state, info}, state), do: set_state_impl(info, state)
 
   def handle_call({:set_active_ws, pid}, reply, state), do: set_active_ws(pid, reply, state)
+  def handle_call({:get, key}, reply, state), do: get_impl(key, reply, state)
+  def handle_call({:get_state}, reply, state), do: get_state_impl(reply, state)
 
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state), do: handle_disconnect(pid, state)
 end

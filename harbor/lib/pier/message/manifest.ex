@@ -1,5 +1,6 @@
 defmodule Pier.Message.Manifest do
   alias Pier.Message.Room
+  alias Pier.Message.Chat
   alias Pier.Message.Misc
   alias Pier.Message.Auth
 
@@ -8,6 +9,8 @@ defmodule Pier.Message.Manifest do
 
   @actions %{
     "room:create" => Room.Create,
+    "room:join" => Room.Join,
+    "chat:send_msg" => Chat.Send,
     "foo:bar" => Misc.Bar,
     "auth:request" => Auth.Request
   }

@@ -1,7 +1,7 @@
 defmodule Pier.Message.Room.Create do
   use Pier.Message.Call, reply: __MODULE__
 
-  @derive {Jason.Encoder, except: [:__meta__]}
+  @derive {Jason.Encoder, only: [:id, :code, :name, :isPrivate, :game]}
 
   @primary_key {:id, :binary_id, []}
   schema "rooms" do
@@ -10,14 +10,6 @@ defmodule Pier.Message.Room.Create do
     field(:game, :string)
   end
 
-  @spec changeset(
-          {map, map}
-          | %{
-              :__struct__ => atom | %{:__changeset__ => map, optional(any) => any},
-              optional(atom) => any
-            },
-          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
-        ) :: Ecto.Changeset.t()
   def changeset(initializer \\ %__MODULE__{}, data) do
     initializer
     |> cast(data, [:name, :isPrivate, :game])
@@ -27,8 +19,6 @@ defmodule Pier.Message.Room.Create do
   end
 
   def execute(changeset, state) do
-    IO.puts("STATE " <> inspect(state))
-
     with {:ok, room_spec} <- apply_action(changeset, :validation),
          {:ok, %{room: room}} <-
            Harbor.Room.create_room(
@@ -37,7 +27,8 @@ defmodule Pier.Message.Room.Create do
              room_spec.isPrivate,
              room_spec.game
            ) do
-      {:reply, struct(__MODULE__, Map.from_struct(room)), state}
+      user = %{state.user | current_room_id: room.id}
+      {:reply, room, %{state | user: user}}
     end
   end
 end

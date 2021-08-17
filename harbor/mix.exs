@@ -23,8 +23,10 @@ defmodule Harbor.MixProject do
   defp deps do
     [
       {:plug_cowboy, "~> 2.5"},
+      {:phoenix_pubsub, "~> 2.0.0"},
       {:jason, "~> 1.2"},
       {:ecto_enum, "~> 1.4"},
+      {:elixir_uuid, "~> 1.2"},
       {:expletive, "~> 0.1.0"}
     ]
   end

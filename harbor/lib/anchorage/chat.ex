@@ -1,17 +1,21 @@
 defmodule Anchorage.Chat do
   use GenServer, restart: :temporary
 
+  alias Anchorage.PubSub
+
   require Logger
 
   defstruct room_id: "",
             room_creator_id: "",
             users: [],
+            last_message_map: %{},
             chat_throttle: 1000
 
   @type state :: %__MODULE__{
           room_id: String.t(),
           room_creator_id: String.t(),
-          chat_throttle: number()
+          last_message_map: %{optional(UUID.t()) => DateTime.t()},
+          chat_throttle: integer()
         }
 
   defp via(user_id), do: {:via, Registry, {Anchorage.RoomChatRegistry, user_id}}
@@ -77,7 +81,58 @@ defmodule Anchorage.Chat do
     {:noreply, %{state | room_creator_id: id}}
   end
 
+  def add_user(room_id, user_id), do: cast(room_id, {:add_user, user_id})
+
+  defp add_user_impl(user_id, state) do
+    if user_id in state.users do
+      {:noreply, state}
+    else
+      {:noreply, %{state | users: [user_id | state.users]}}
+    end
+  end
+
+  ### - SEND MESSAGE - ################################################################
+
+  def send_msg(room_id, payload) do
+    cast(room_id, {:send_msg, payload})
+  end
+
+  defp send_msg_impl(payload = %{from: from}, %__MODULE__{} = state) do
+    # Throttle
+    with false <- should_throttle?(from, state) do
+      dispatch_message(payload, state)
+
+      {:noreply,
+       %{
+         state
+         | last_message_map: Map.put(state.last_message_map, from, DateTime.utc_now())
+       }}
+    else
+      _ -> {:noreply, state}
+    end
+  end
+
+  defp dispatch_message(payload, state) do
+    PubSub.broadcast("chat:" <> state.room_id, %Pier.Message{
+      operator: "chat:send",
+      payload: payload
+    })
+
+    :ok
+  end
+
+  @spec should_throttle?(UUID.t(), state) :: boolean
+  defp should_throttle?(user_id, %__MODULE__{last_message_map: m, chat_throttle: ct})
+       when is_map_key(m, user_id) do
+    DateTime.diff(DateTime.utc_now(), m[user_id], :millisecond) <
+      ct
+  end
+
+  defp should_throttle?(_, _), do: false
+
   ### - ROUTER - ######################################################################
 
   def handle_cast({:set_room_creator_id, id}, state), do: set_room_creator_id_impl(id, state)
+  def handle_cast({:add_user, user_id}, state), do: add_user_impl(user_id, state)
+  def handle_cast({:send_msg, message}, state), do: send_msg_impl(message, state)
 end

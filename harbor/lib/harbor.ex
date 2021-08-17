@@ -12,6 +12,8 @@ defmodule Harbor do
       Anchorage.Supervisors.UserSession,
       Anchorage.Supervisors.RoomSession,
       Anchorage.Supervisors.Chat,
+      Anchorage.RoomCode,
+      {Phoenix.PubSub, name: Anchorage.PubSub},
       Plug.Cowboy.child_spec(
         scheme: :http,
         plug: Broth,

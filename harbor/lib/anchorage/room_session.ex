@@ -2,6 +2,30 @@ defmodule Anchorage.RoomSession do
   use GenServer, restart: :temporary
 
   defmodule State do
+    defimpl Jason.Encoder, for: State do
+      def encode(value, opts) do
+        to_encode =
+          value
+          |> Map.from_struct()
+          |> Enum.map(fn {key, value} -> {transform_key(key), value} end)
+          |> Enum.into(%{})
+
+        Jason.Encode.map(Map.take(to_encode, [:id, :name, :code, :isPrivate, :game]), opts)
+      end
+
+      @spec transform_key(atom()) :: atom()
+      defp transform_key(old_key) do
+        case old_key do
+          :room_id -> :id
+          :room_creator_id -> :creatorId
+          :room_name -> :name
+          :room_code -> :code
+          :is_private -> :isPrivate
+          x -> x
+        end
+      end
+    end
+
     @type t :: %__MODULE__{
             room_id: String.t(),
             room_creator_id: String.t(),
@@ -55,4 +79,54 @@ defmodule Anchorage.RoomSession do
       Anchorage.UserSession.send_ws(uid, nil, msg)
     end)
   end
+
+  ### - API - #########################################################################
+
+  def get_state(room_id) do
+    call(room_id, {:get_state})
+  end
+
+  defp get_state_impl(state) do
+    {:reply, state, state}
+  end
+
+  def join_room(room_id, user_id, opts \\ []) do
+    cast(room_id, {:join_room, user_id, opts})
+  end
+
+  defp join_room_impl(user_id, opts, state) do
+    Anchorage.Chat.add_user(state.room_id, user_id)
+
+    user = Anchorage.UserSession.get_state(user_id)
+
+    Anchorage.UserSession.set_current_room_id(user_id, state.room_id)
+
+    if not is_nil(user) do
+      unless opts[:no_fan] do
+        ws_fan(state.users, %{
+          op: "user_join",
+          d: %{
+            user: user
+          }
+        })
+      end
+    end
+
+    IO.puts("user joined room")
+
+    {:noreply,
+     %{
+       state
+       | users: [
+           user_id
+           | Enum.filter(state.users, fn uid -> uid != user_id end)
+         ]
+     }}
+  end
+
+  ### - ROUTER - ######################################################################
+
+  def handle_call({:get_state}, _reply, state), do: get_state_impl(state)
+
+  def handle_cast({:join_room, user_id, opts}, state), do: join_room_impl(user_id, opts, state)
 end

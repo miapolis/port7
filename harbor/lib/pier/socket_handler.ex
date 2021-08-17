@@ -44,6 +44,30 @@ defmodule Pier.SocketHandler do
     ws_push(prepare_socket_msg(message), state)
   end
 
+  ### - CHAT MESSAGES - #######################################################
+
+  defp real_chat_impl({"chat:" <> _room_id, message}, %__MODULE__{} = state) do
+    message
+    |> prepare_socket_msg
+    |> ws_push(state)
+  end
+
+  def chat_impl(
+        {"chat:" <> _room_id, %Pier.Message{payload: %Pier.Message.Chat.Send{from: _from}}} = p1,
+        %__MODULE__{} = state
+      ) do
+    real_chat_impl(p1, state)
+  end
+
+  def chat_impl(
+        {"chat:" <> _room_id, _} = p1,
+        %__MODULE__{} = state
+      ) do
+    real_chat_impl(p1, state)
+  end
+
+  def chat_impl(_, state), do: ws_push(nil, state)
+
   ### - WEBSOCKET API - #######################################################
 
   @impl true
@@ -141,4 +165,9 @@ defmodule Pier.SocketHandler do
   def websocket_info({:EXIT, _, _}, state), do: exit_impl(state)
   def websocket_info(:exit, state), do: exit_impl(state)
   def websocket_info({:remote_send, message}, state), do: remote_send_impl(message, state)
+  def websocket_info(message = {"chat:" <> _, _}, state), do: chat_impl(message, state)
+
+  def websocket_info(_, state) do
+    ws_push(nil, state)
+  end
 end
