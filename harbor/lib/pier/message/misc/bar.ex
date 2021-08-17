@@ -15,7 +15,7 @@ defmodule Pier.Message.Misc.Bar do
 
   defmodule Reply do
     use Pier.Message.Push
-    @derive {Jason.Encoder, only: []}
+    @derive {Jason.Encoder, only: [:message]}
     @primary_key false
     embedded_schema do
       field(:message, :string)

@@ -24,15 +24,26 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       isConnecting.current = true;
       dock
         .connect({ waitToReconnect: true })
-        .then(setConn)
-        .catch((err) => {})
+        .then((x) => {
+          console.log("CONN" + x);
+          setConn(x);
+        })
+        .catch((err) => {
+          console.log(err);
+        })
         .finally(() => (isConnecting.current = false));
     }
   }, [conn, shouldConnect]);
 
   return (
     <WebSocketContext.Provider
-      value={React.useMemo(() => ({ conn, setConn }), [])}
+      value={React.useMemo(
+        () => ({
+          conn,
+          setConn,
+        }),
+        [conn]
+      )}
     >
       {children}
     </WebSocketContext.Provider>

@@ -1,9 +1,10 @@
 defmodule Pier.SocketHandler do
   require Logger
 
-  defstruct ip: nil
+  defstruct user: nil, ip: nil
 
   @type state :: %__MODULE__{
+          user: nil | Anchorage.UserSession.State.t(),
           ip: String.t()
         }
 
@@ -11,13 +12,11 @@ defmodule Pier.SocketHandler do
 
   @impl true
   def init(request, _state) do
-    ip = request.headers["x-forwarded-for"]
+    ip = request.headers["X-Forwarded-For"]
 
     state = %__MODULE__{
       ip: ip
     }
-
-    Anchorage.UserSession.start_supervised(user_id: "1", ip: ip)
 
     {:cowboy_websocket, request, state}
   end
@@ -30,11 +29,22 @@ defmodule Pier.SocketHandler do
   @typep command :: :cow_ws.frame() | {:shutdown, :normal}
   @typep call_result :: {[command], state}
 
+  ### - API - #################################################################
+
   def exit(pid), do: send(pid, :exit)
   @spec exit_impl(state) :: call_result
   defp exit_impl(state) do
     ws_push([{:close, 4003, "killed by server"}, shutdown: :normal], state)
   end
+
+  def remote_send(socket, message), do: send(socket, {:remote_send, message})
+
+  @spec remote_send_impl(Harbor.json(), state) :: call_result
+  defp remote_send_impl(message, state) do
+    ws_push(prepare_socket_msg(message), state)
+  end
+
+  ### - WEBSOCKET API - #######################################################
 
   @impl true
   def websocket_handle({:text, "ping"}, state), do: {[text: "pong"], state}
@@ -50,7 +60,6 @@ defmodule Pier.SocketHandler do
 
   import Ecto.Changeset
 
-  @spec validate(map, state) :: {:ok, Pier.Message.t()} | {:error, Ecto.Changeset.t()}
   def validate(message, state) do
     message
     |> Pier.Message.changeset(state)
@@ -108,12 +117,28 @@ defmodule Pier.SocketHandler do
     %{message: inspect(other)}
   end
 
-  def prepare_socket_msg(data), do: {:text, Jason.encode!(data)}
+  def prepare_socket_msg(data) do
+    data
+    |> encode_data
+    |> prepare_data
+  end
+
+  defp encode_data(data) do
+    Jason.encode!(data)
+  end
+
+  defp prepare_data(data) do
+    {:text, data}
+  end
 
   defp ws_push(frame, state) do
     {List.wrap(frame), state}
   end
 
+  ### - ROUTER - ##############################################################
+
   @impl true
   def websocket_info({:EXIT, _, _}, state), do: exit_impl(state)
+  def websocket_info(:exit, state), do: exit_impl(state)
+  def websocket_info({:remote_send, message}, state), do: remote_send_impl(message, state)
 end

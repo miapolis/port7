@@ -20,7 +20,11 @@ export type Connection = {
   close: () => void;
   addListener: (id: string | Opcode, listener: ListenerHandler) => () => void;
   sendCast: (opcode: Opcode, data: unknown, ref?: string) => void;
-  sendCall: (opcode: Opcode, data: unknown) => Promise<unknown>;
+  sendCall: (
+    opcode: Opcode,
+    data: unknown,
+    doneOpcode?: Opcode
+  ) => Promise<unknown>;
 };
 
 export const connect = ({
@@ -75,11 +79,13 @@ export const connect = ({
     });
 
     socket.addEventListener("message", (e) => {
+      console.log("INBOUND");
       if (e.data === `"pong"` || e.data === `pong`) {
         return;
       }
 
       const message = JSON.parse(e.data);
+      console.log(message);
       const data = message.d || message.p || message.payload;
       const errors = message.e || message.errors;
       const operator = message.op || message.operator;
@@ -102,33 +108,35 @@ export const connect = ({
         close: () => socket.close(),
         addListener: addHandler,
         sendCast: apiSend,
-        sendCall: (opcode: Opcode, data: unknown) =>
-          new Promise((resolve, reject) => {
+        sendCall: (opcode: Opcode, data: unknown, doneOpcode?: Opcode) =>
+          new Promise((resolveCall, rejectFetch) => {
             if (socket.readyState !== socket.OPEN) {
-              reject(new Error("websocket not connected"));
+              rejectFetch(new Error("websocket not connected"));
               return;
             }
 
             const ref: string = uuidV4();
             let timeoutId: NodeJS.Timeout | null = null;
 
-            const unsubscribe = connection.addListener(ref, (data) => {
-              if (timeoutId) clearTimeout(timeoutId);
+            const unsubscribe = connection.addListener(
+              doneOpcode ?? opcode + ":reply",
+              (data) => {
+                console.log("Received data!");
+                if (timeoutId) clearTimeout(timeoutId);
 
-              unsubscribe();
-              if (data.errors)
-                return reject(
-                  new Error("Errors: " + JSON.stringify(data.errors))
-                );
-              resolve(data.data);
-            });
+                unsubscribe();
+                resolveCall(data);
+              }
+            );
 
             if (fetchTimeout) {
               timeoutId = setTimeout(() => {
                 unsubscribe();
-                reject(new Error("timed out"));
+                rejectFetch(new Error("timed out"));
               }, fetchTimeout);
             }
+
+            apiSend(opcode, data, ref);
           }),
       };
 

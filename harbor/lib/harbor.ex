@@ -1,12 +1,17 @@
 defmodule Harbor do
   use Application
 
+  @games ["rumble"]
+  def games(), do: @games
+
   @impl true
   def start(_type, _args) do
     IO.puts("Starting port7...")
 
     children = [
       Anchorage.Supervisors.UserSession,
+      Anchorage.Supervisors.RoomSession,
+      Anchorage.Supervisors.Chat,
       Plug.Cowboy.child_spec(
         scheme: :http,
         plug: Broth,

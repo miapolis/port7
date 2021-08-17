@@ -1,11 +1,15 @@
 defmodule Pier.Message.Manifest do
+  alias Pier.Message.Room
   alias Pier.Message.Misc
+  alias Pier.Message.Auth
 
   alias Pier.Message.Types.Operator
   require Operator
 
   @actions %{
-    "foo:bar" => Misc.Bar
+    "room:create" => Room.Create,
+    "foo:bar" => Misc.Bar,
+    "auth:request" => Auth.Request
   }
 
   @actions

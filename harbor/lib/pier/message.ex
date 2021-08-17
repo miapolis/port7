@@ -6,7 +6,7 @@ defmodule Pier.Message do
   embedded_schema do
     field(:operator, Pier.Message.Types.Operator, null: false)
     field(:payload, :map)
-    field(:references, :binary_id)
+    field(:reference, :binary_id)
     field(:inbound_operator, :string)
     field(:errors, :map)
   end
@@ -14,15 +14,18 @@ defmodule Pier.Message do
   @type t :: %__MODULE__{
           operator: module(),
           payload: map(),
-          references: Harbor.Utils.UUID.t(),
+          reference: Harbor.Utils.UUID.t(),
           inbound_operator: String.t()
         }
 
+  @spec changeset(%{String.t() => Pier.json()}, Pier.SocketHandler.state()) :: Changeset.t()
   def changeset(data, state) do
     %__MODULE__{}
     |> cast(data, [:inbound_operator])
     |> Map.put(:params, data)
     |> find(:operator)
+    |> find(:payload)
+    |> find(:reference, :optional)
     |> cast_operator
     |> cast_reference
     |> cast_inbound_operator
@@ -38,14 +41,17 @@ defmodule Pier.Message do
     reference: ~w(reference ref fetchId)
   }
 
-  defp find(changeset, field, option \\ false)
+  defp find(changeset, field, optional \\ false)
   defp find(changeset = %{valid?: false}, _, _), do: changeset
 
   defp find(changeset, field, optional) when is_atom(field) do
     find(changeset, field, @valid_forms[field], optional)
   end
 
-  defp find(changeset = %{params: params}, field, [form | _], _) when is_map_key(params, form) do
+  @spec find(Changeset.t(), message_field, [String.t()], :optional | false) :: Changeset.t()
+
+  defp find(changeset = %{params: params}, field, [form | _], _)
+       when is_map_key(params, form) do
     %{changeset | params: Map.put(changeset.params, "#{field}", params[form])}
   end
 

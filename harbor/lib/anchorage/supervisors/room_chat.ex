@@ -1,4 +1,4 @@
-defmodule Anchorage.Supervisors.UserSession do
+defmodule Anchorage.Supervisors.Chat do
   use Supervisor
 
   def start_link(init) do
@@ -8,8 +8,8 @@ defmodule Anchorage.Supervisors.UserSession do
   @impl true
   def init(_init) do
     children = [
-      {Registry, keys: :unique, name: Anchorage.UserSessionRegistry},
-      {DynamicSupervisor, name: Anchorage.UserSessionDynamicSupervisor, strategy: :one_for_one}
+      {Registry, keys: :unique, name: Anchorage.RoomChatRegistry},
+      {DynamicSupervisor, name: Anchorage.RoomChatDynamicSupervisor, strategy: :one_for_one}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

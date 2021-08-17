@@ -1,9 +1,28 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
-import { PageComponent } from '../types/page-component'
+import React from "react";
+import Head from "next/head";
+import Image from "next/image";
+import styles from "../styles/Home.module.css";
+import { PageComponent } from "../types/page-component";
+import { useConn } from "@port7/hooks/use-conn";
 
 const HomePage: PageComponent<unknown> = () => {
+  const conn = useConn();
+
+  React.useEffect(() => {
+    const fun = async () => {
+      if (!conn) return;
+      let result: any = await conn.sendCall("auth:request", {});
+      console.log(result.data.message);
+      let room: any = await conn.sendCall("room:create", {
+        name: "MYROOM",
+        isPrivate: true,
+        game: "rumble",
+      });
+      console.log("ROOM", room.data.message);
+    };
+    fun();
+  }, [conn]);
+
   return (
     <div className={styles.container}>
       <Head>
@@ -18,7 +37,7 @@ const HomePage: PageComponent<unknown> = () => {
         </h1>
 
         <p className={styles.description}>
-          Get started by editing{' '}
+          Get started by editing{" "}
           <code className={styles.code}>pages/index.js</code>
         </p>
 
@@ -59,15 +78,15 @@ const HomePage: PageComponent<unknown> = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by{" "}
           <span className={styles.logo}>
             <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
           </span>
         </a>
       </footer>
     </div>
-  )
-}
+  );
+};
 
 HomePage.ws = true;
 

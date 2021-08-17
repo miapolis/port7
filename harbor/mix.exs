@@ -24,7 +24,8 @@ defmodule Harbor.MixProject do
     [
       {:plug_cowboy, "~> 2.5"},
       {:jason, "~> 1.2"},
-      {:ecto_enum, "~> 1.4"}
+      {:ecto_enum, "~> 1.4"},
+      {:expletive, "~> 0.1.0"}
     ]
   end
 end
