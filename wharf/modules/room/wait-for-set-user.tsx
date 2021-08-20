@@ -24,10 +24,11 @@ export const WaitForSetUser: React.FC<WaitForSetUserProps> = ({
       setPreferredNickname(nickname);
       user.setUser(nickname, true);
     }
-    await conn?.sendCall("auth:request", {nickname: nickname});
+    await conn?.sendCall("auth:request", { nickname: nickname });
     auth.setIsAuthenticated(true);
+    useUserStore.getState().setUser(nickname, true);
     setIsReady(true);
-  }
+  };
 
   if (!user.user?.isPreferredNickname && !isReady) {
     return (

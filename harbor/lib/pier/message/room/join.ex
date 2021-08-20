@@ -17,11 +17,12 @@ defmodule Pier.Message.Room.Join do
   defmodule Reply do
     use Pier.Message.Push
 
-    @derive {Jason.Encoder, only: [:id, :name, :isPrivate]}
+    @derive {Jason.Encoder, only: [:name, :isPrivate, :myPeerId]}
 
-    @primary_key {:id, :binary_id, []}
+    @primary_key false
     schema "rooms" do
       field(:name, :string)
+      field(:myPeerId, :integer)
       field(:isPrivate, :boolean)
     end
   end
@@ -34,10 +35,11 @@ defmodule Pier.Message.Room.Join do
         %{error: error} ->
           {:error, error, state}
 
-        %{room: room} ->
+        %{room: room, peer_id: peer_id} ->
           user = %{state.user | current_room_id: room.room_id}
 
-          {:reply, %Reply{name: room.room_name, isPrivate: room.is_private},
+          IO.puts "MY PEER ID " <> inspect peer_id
+          {:reply, %Reply{name: room.room_name, isPrivate: room.is_private, myPeerId: peer_id},
            %{state | user: user}}
       end
     end

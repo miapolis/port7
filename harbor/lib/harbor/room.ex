@@ -1,5 +1,6 @@
 defmodule Harbor.Room do
   alias Anchorage.PubSub
+  alias Harbor.Peer
 
   @max_room_size 100
 
@@ -29,13 +30,9 @@ defmodule Harbor.Room do
       room_name: room.name,
       room_code: room.code,
       is_private: room.isPrivate,
-      game: room.game
+      peers: %{},
+      game: room.game,
     )
-
-    Anchorage.RoomSession.join_room(room.id, user_id, no_fan: true)
-
-    # Subscribe to room chat
-    Anchorage.PubSub.subscribe("chat:" <> id)
 
     {:ok, %{room: room}}
   end
@@ -44,18 +41,23 @@ defmodule Harbor.Room do
     current_room_id = Anchorage.UserSession.get_current_room_id(user_id)
 
     if current_room_id == room_id do
-      %{room: Anchorage.RoomSession.get_state(room_id)}
+      room = Anchorage.RoomSession.get_state(room_id)
+      peer_id = Map.fetch!(room.peers, user_id)
+      %{room: room, peer_id: peer_id}
     else
       case can_join_room(room_id, user_id) do
         {:error, message} ->
           %{error: message}
 
         {:ok, room} ->
-          Anchorage.RoomSession.join_room(room.room_id, user_id)
+          peer_id = gen_peer_id(room);
+          peer = %Peer{id: peer_id}
+
+          Anchorage.RoomSession.join_room(room.room_id, user_id, peer)
 
           Anchorage.PubSub.subscribe("chat:" <> room_id)
 
-          %{room: room}
+          %{room: room, peer_id: peer_id}
       end
     end
   end
@@ -93,5 +95,18 @@ defmodule Harbor.Room do
 
       {:ok, %{roomId: current_room_id}}
     end
+  end
+
+  def gen_peer_id(room_state) do
+    peer_count = Enum.count(room_state.peers)
+    existing_ids = Enum.map(Map.values(room_state.peers), & &1.id)
+
+    Enum.reduce_while(0..(peer_count + 1), 0, fn x, acc ->
+      if !Enum.member?(existing_ids, x) do
+        {:halt, x}
+      else
+        {:cont, acc}
+      end
+    end)
   end
 end

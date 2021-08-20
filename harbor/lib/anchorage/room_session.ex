@@ -87,15 +87,14 @@ defmodule Anchorage.RoomSession do
     {:reply, state, state}
   end
 
-  def join_room(room_id, user_id, opts \\ []) do
-    cast(room_id, {:join_room, user_id, opts})
+  def join_room(room_id, user_id, peer, opts \\ []) do
+    cast(room_id, {:join_room, user_id, peer, opts})
   end
 
-  defp join_room_impl(user_id, opts, state) do
+  defp join_room_impl(user_id, peer, opts, state) do
     Anchorage.Chat.add_user(state.room_id, user_id)
 
     user = Anchorage.UserSession.get_state(user_id)
-    peer_id = gen_peer_id(state)
 
     Anchorage.UserSession.set_current_room_id(user_id, state.room_id)
 
@@ -104,7 +103,7 @@ defmodule Anchorage.RoomSession do
         ws_fan(state.peers, %{
           op: "peer_join",
           d: %{
-            id: peer_id,
+            id: peer.id,
             nickname: user.nickname
           }
         })
@@ -114,7 +113,7 @@ defmodule Anchorage.RoomSession do
     {:noreply,
      %{
        state
-       | peers: Map.put(state.peers, user_id, %Harbor.Peer{id: peer_id})
+       | peers: Map.put(state.peers, user_id, peer)
      }}
   end
 
@@ -136,21 +135,6 @@ defmodule Anchorage.RoomSession do
 
   def handle_call({:get_state}, _reply, state), do: get_state_impl(state)
 
-  def handle_cast({:join_room, user_id, opts}, state), do: join_room_impl(user_id, opts, state)
+  def handle_cast({:join_room, user_id, peer, opts}, state), do: join_room_impl(user_id, peer, opts, state)
   def handle_cast({:leave_room, user_id}, state), do: leave_room_impl(user_id, state)
-
-  ### - HELPERS - #####################################################################
-
-  def gen_peer_id(state) do
-    peer_count = Enum.count(state.peers)
-    existing_ids = Enum.map(Map.values(state.peers), & &1.id)
-
-    Enum.reduce_while(0..(peer_count + 1), 0, fn x, acc ->
-      if !Enum.member?(existing_ids, x) do
-        {:halt, x}
-      else
-        {:cont, acc}
-      end
-    end)
-  end
 end
