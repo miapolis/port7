@@ -31,7 +31,7 @@ defmodule Harbor.Room do
       room_code: room.code,
       is_private: room.isPrivate,
       peers: %{},
-      game: room.game,
+      game: room.game
     )
 
     {:ok, %{room: room}}
@@ -50,8 +50,8 @@ defmodule Harbor.Room do
           %{error: message}
 
         {:ok, room} ->
-          peer_id = gen_peer_id(room);
-          peer = %Peer{id: peer_id}
+          peer_id = gen_peer_id(room)
+          peer = %Peer{id: peer_id, nickname: Anchorage.UserSession.get(user_id, :nickname)}
 
           Anchorage.RoomSession.join_room(room.room_id, user_id, peer)
 

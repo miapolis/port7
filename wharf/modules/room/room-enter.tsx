@@ -17,7 +17,8 @@ export const RoomEnter: React.FC<RoomEnterProps> = ({ room, children }) => {
         roomId: room.id,
       });
       let nickname = useUserStore.getState().user?.nickname ?? "";
-      useRoomStore.getState().addPeer(data.myPeerId, nickname);
+      useRoomStore.getState().setPeers(data.peers);
+      // TODO: Handle myPeerId
     };
     func();
   }, []);

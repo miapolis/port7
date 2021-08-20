@@ -135,6 +135,8 @@ defmodule Anchorage.RoomSession do
 
   def handle_call({:get_state}, _reply, state), do: get_state_impl(state)
 
-  def handle_cast({:join_room, user_id, peer, opts}, state), do: join_room_impl(user_id, peer, opts, state)
+  def handle_cast({:join_room, user_id, peer, opts}, state),
+    do: join_room_impl(user_id, peer, opts, state)
+
   def handle_cast({:leave_room, user_id}, state), do: leave_room_impl(user_id, state)
 end
