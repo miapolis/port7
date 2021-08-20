@@ -124,9 +124,23 @@ defmodule Anchorage.RoomSession do
      }}
   end
 
+  def leave_room(room_id, user_id), do: cast(room_id, {:leave_room, user_id})
+
+  defp leave_room_impl(user_id, state) do
+    users = Enum.reject(state.users, &(&1 == user_id))
+
+    ws_fan(users, %{
+      op: "user_left_room",
+      d: %{userId: user_id, roomId: state.room_id}
+    })
+
+    {:noreply, state}
+  end
+
   ### - ROUTER - ######################################################################
 
   def handle_call({:get_state}, _reply, state), do: get_state_impl(state)
 
   def handle_cast({:join_room, user_id, opts}, state), do: join_room_impl(user_id, opts, state)
+  def handle_cast({:leave_room, user_id}, state), do: leave_room_impl(user_id, state)
 end

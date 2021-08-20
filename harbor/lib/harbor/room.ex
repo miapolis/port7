@@ -1,4 +1,6 @@
 defmodule Harbor.Room do
+  alias Anchorage.PubSub
+
   @max_room_size 100
 
   def create_room(
@@ -81,6 +83,16 @@ defmodule Harbor.Room do
       Anchorage.RoomSession.get_state(room_id)
     else
       nil
+    end
+  end
+
+  def leave_room(user_id, current_room_id) do
+    if current_room_id do
+      Anchorage.RoomSession.leave_room(current_room_id, user_id)
+
+      PubSub.unsubscribe("chat:" <> current_room_id)
+
+      {:ok, %{roomId: current_room_id}}
     end
   end
 end

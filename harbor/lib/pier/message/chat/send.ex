@@ -4,13 +4,14 @@ defmodule Pier.Message.Chat.Send do
 
   @message_character_limit 100
 
-  @derive {Jason.Encoder, only: [:id, :tokens, :from, :sentAt]}
+  @derive {Jason.Encoder, only: [:id, :tokens, :from, :sentAt, :nickname]}
 
   @primary_key false
   embedded_schema do
     field(:id, :binary_id)
     embeds_many(:tokens, ChatToken)
     field(:from, :binary_id)
+    field(:nickname, :string)
     field(:sentAt, :utc_datetime)
   end
 
@@ -19,6 +20,7 @@ defmodule Pier.Message.Chat.Send do
     %__MODULE__{
       id: UUID.uuid4(),
       from: state.user.user_id,
+      nickname: state.user.nickname,
       sentAt: DateTime.utc_now()
     }
   end

@@ -3,6 +3,7 @@ defmodule Pier.Routes.Room do
 
   use Plug.Router
 
+  plug(Pier.Plugs.Cors)
   plug(:match)
   plug(:dispatch)
 

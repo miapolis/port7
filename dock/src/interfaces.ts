@@ -1,3 +1,8 @@
+export type RoomCreateResponse = {
+  data: Room | null,
+  errors: string[] | undefined,
+}
+
 export type Room = {
   id: string,
   name: string,

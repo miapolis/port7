@@ -1,8 +1,15 @@
 import React from "react";
 import { PageComponent } from "@port7/types/page-component";
 import { apiBaseUrl } from "@port7/lib/constants";
+import { WaitForWsAndAuth } from "@port7/modules/auth/wait-for-ws-auth";
 import { useConn } from "@port7/hooks/use-conn";
 import { Room } from "@port7/dock";
+import { WaitForSetUser } from "@port7/modules/room/wait-for-set-user";
+import { RoomEnter } from "@port7/modules/room/room-enter";
+import { useRoomStore } from "@port7/modules/room/use-room-store";
+import { Header } from "@port7/modules/room/header";
+import { MainLayout } from "@port7/modules/room/main-layout";
+import { Chat } from "@port7/modules/room/chat";
 
 interface RoomPageProps {
   room?: Room;
@@ -10,24 +17,32 @@ interface RoomPageProps {
 
 const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const conn = useConn();
+  const roomStore = useRoomStore();
 
   React.useEffect(() => {
-    const fun = async () => {
-      if (!conn || !room) return;
-      await conn.sendCall("auth:request", {nickname: "Bob"});
-      await conn.sendCall("room:join", { roomId: room?.id });
-      conn.sendCast("chat:send_msg", {tokens: [{t: "text", v: "Hello other user!"}]})
-    }
-    fun();
-  }, [conn]);
+    roomStore.setRoom(room);
+  }, [room]);
 
   return (
-    <div>
-      <div>You are in the room</div>
+    <>
       {room ? (
-        <h3>{`${room.name} | ${room.isPrivate} | ${room.code}`}</h3>
+        <WaitForWsAndAuth>
+          <WaitForSetUser room={room}>
+            {room ? (
+              <RoomEnter room={room}>
+                <div className="w-full h-full flex flex-col">
+                  <Header />
+                  <div className="flex flex-row h-full w-full overflow-hidden">
+                    <MainLayout />
+                    <Chat />
+                  </div>
+                </div>
+              </RoomEnter>
+            ) : undefined}
+          </WaitForSetUser>
+        </WaitForWsAndAuth>
       ) : undefined}
-    </div>
+    </>
   );
 };
 

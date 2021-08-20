@@ -99,6 +99,11 @@ defmodule Anchorage.UserSession do
 
   defp handle_disconnect(pid, state = %{ip: ip, pid: pid}) do
     IO.puts("User #{ip} disconnected")
+
+    if state.current_room_id do
+      Harbor.Room.leave_room(state.user_id, state.current_room_id)
+    end
+
     {:stop, :normal, state}
   end
 

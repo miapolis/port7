@@ -25,7 +25,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       dock
         .connect({ waitToReconnect: true })
         .then((x) => {
-          console.log("CONN" + x);
           setConn(x);
         })
         .catch((err) => {
