@@ -26,7 +26,6 @@ defmodule Harbor.Room do
 
     Anchorage.RoomSession.start_supervised(
       room_id: room.id,
-      room_creator_id: user_id,
       room_name: room.name,
       room_code: room.code,
       is_private: room.isPrivate,
@@ -64,10 +63,10 @@ defmodule Harbor.Room do
   # TODO: In the future, we will have room blocks and all that
   def can_join_room(room_id, _user_id) do
     room = Anchorage.RoomSession.get_state(room_id)
-    users = room.users
+    peers = room.peers
 
     cond do
-      length(users) > @max_room_size ->
+      Enum.count(peers) > @max_room_size ->
         {:error, "room is full"}
 
       true ->

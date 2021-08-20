@@ -1,5 +1,6 @@
 import create from "zustand";
 import { combine } from "zustand/middleware";
+import { v4 as uuidv4 } from "uuid";
 
 interface TextToken {
   t: "text";
@@ -7,7 +8,7 @@ interface TextToken {
 }
 
 interface LinkToken {
-  t: "link"
+  t: "link";
   v: string;
 }
 
@@ -19,6 +20,7 @@ export interface RoomChatMessage {
   sentAt: string;
   nickname: string;
   tokens: RoomChatMessageToken[];
+  isSystem: boolean;
 }
 
 export const useRoomChatStore = create(
@@ -42,11 +44,13 @@ export const useRoomChatStore = create(
 
 // TODO: this should probably go somewhere else
 export const createSystemMessage = (text: string): RoomChatMessage => {
+  console.log("Creating system message...");
   return {
-    id: text,
-    from: "system",
+    id: uuidv4(),
+    isSystem: true,
+    from: "",
     sentAt: "",
-    nickname: "system", // Fix
-    tokens: [{t: "text", v: text}]
-  }
-}
+    nickname: "",
+    tokens: [{ t: "text", v: text }],
+  };
+};

@@ -17,7 +17,6 @@ defmodule Anchorage.RoomSession do
       defp transform_key(old_key) do
         case old_key do
           :room_id -> :id
-          :room_creator_id -> :creatorId
           :room_name -> :name
           :room_code -> :code
           :is_private -> :isPrivate
@@ -28,20 +27,18 @@ defmodule Anchorage.RoomSession do
 
     @type t :: %__MODULE__{
             room_id: String.t(),
-            room_creator_id: String.t(),
             room_name: String.t(),
             room_code: String.t(),
             is_private: String.t(),
-            users: [String.t()],
+            peers: %{String.t() => Harbor.Peer.t()},
             game: atom()
           }
 
     defstruct room_id: "",
-              room_creator_id: "",
               room_name: "",
               room_code: "",
               is_private: false,
-              users: [],
+              peers: %{},
               game: :none
   end
 
@@ -75,7 +72,7 @@ defmodule Anchorage.RoomSession do
   end
 
   def ws_fan(users, msg) do
-    Enum.each(users, fn uid ->
+    Enum.each(Map.keys(users), fn uid ->
       Anchorage.UserSession.send_ws(uid, nil, msg)
     end)
   end
@@ -98,43 +95,41 @@ defmodule Anchorage.RoomSession do
     Anchorage.Chat.add_user(state.room_id, user_id)
 
     user = Anchorage.UserSession.get_state(user_id)
+    peer_id = gen_peer_id(state)
 
     Anchorage.UserSession.set_current_room_id(user_id, state.room_id)
 
     if not is_nil(user) do
       unless opts[:no_fan] do
-        ws_fan(state.users, %{
-          op: "user_join",
+        ws_fan(state.peers, %{
+          op: "peer_join",
           d: %{
-            user: user
+            id: peer_id,
+            nickname: user.nickname
           }
         })
       end
     end
 
-    IO.puts("user joined room")
-
     {:noreply,
      %{
        state
-       | users: [
-           user_id
-           | Enum.filter(state.users, fn uid -> uid != user_id end)
-         ]
+       | peers: Map.put(state.peers, user_id, %Harbor.Peer{id: peer_id})
      }}
   end
 
   def leave_room(room_id, user_id), do: cast(room_id, {:leave_room, user_id})
 
   defp leave_room_impl(user_id, state) do
-    users = Enum.reject(state.users, &(&1 == user_id))
+    {:ok, peer} = Map.fetch(state.peers, user_id)
+    peers = Map.delete(state.peers, user_id)
 
-    ws_fan(users, %{
-      op: "user_left_room",
-      d: %{userId: user_id, roomId: state.room_id}
+    ws_fan(peers, %{
+      op: "peer_leave",
+      d: %{id: peer.id}
     })
 
-    {:noreply, state}
+    {:noreply, %{state | peers: peers}}
   end
 
   ### - ROUTER - ######################################################################
@@ -143,4 +138,19 @@ defmodule Anchorage.RoomSession do
 
   def handle_cast({:join_room, user_id, opts}, state), do: join_room_impl(user_id, opts, state)
   def handle_cast({:leave_room, user_id}, state), do: leave_room_impl(user_id, state)
+
+  ### - HELPERS - #####################################################################
+
+  def gen_peer_id(state) do
+    peer_count = Enum.count(state.peers)
+    existing_ids = Enum.map(Map.values(state.peers), & &1.id)
+
+    Enum.reduce_while(0..(peer_count + 1), 0, fn x, acc ->
+      if !Enum.member?(existing_ids, x) do
+        {:halt, x}
+      else
+        {:cont, acc}
+      end
+    end)
+  end
 end

@@ -59,16 +59,25 @@ export const Chat: React.FC = () => {
                     transform: `translateY(${start}px)`,
                   }}
                 >
-                  {/* {messages[index].tokens[0].v} */}
                   <div
                     className="block break-words overflow-hidden max-w-full items-start flex-1 text-primary-100"
                     key={messages[index].id}
                   >
-                    <span className={`inline`}>
-                      <b>{messages[index].nickname}</b>
-                    </span>
-                    <span className={`inline`}>: </span>
-                    <div className="inline">
+                    {!messages[index].isSystem ? (
+                      <>
+                        <span className={`inline`}>
+                          <b>{messages[index].nickname}</b>
+                        </span>
+                        <span className={`inline`}>: </span>
+                      </>
+                    ) : null}
+                    <div
+                      className={
+                        messages[index].isSystem
+                          ? "inline text-primary-200"
+                          : "inline"
+                      }
+                    >
                       {messages[index].tokens.map(({ t: token, v }, i) => {
                         switch (token) {
                           case "text":

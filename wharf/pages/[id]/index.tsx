@@ -20,7 +20,7 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const roomStore = useRoomStore();
 
   React.useEffect(() => {
-    roomStore.setRoom(room);
+    roomStore.setRoom(room ? { ...room, peers: [] } : room);
   }, [room]);
 
   return (

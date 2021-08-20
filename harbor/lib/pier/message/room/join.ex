@@ -27,7 +27,8 @@ defmodule Pier.Message.Room.Join do
   end
 
   def execute(changeset, state) do
-    IO.inspect state
+    IO.inspect(state)
+
     with {:ok, %{roomId: room_id}} <- apply_action(changeset, :validate) do
       case Harbor.Room.join_room(room_id, state.user.user_id) do
         %{error: error} ->

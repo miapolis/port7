@@ -8,4 +8,10 @@ export type Room = {
   name: string,
   code: string,
   isPrivate: string,
+  peers: Peer[];
+}
+
+export type Peer = {
+  id: number;
+  nickname: string;
 }
