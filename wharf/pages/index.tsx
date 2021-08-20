@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 
@@ -9,6 +9,8 @@ import { GameSelection } from "../modules/landing/game-selection";
 import { useConn } from "@port7/hooks/use-conn";
 import { setPreferredNickname, useUserStore } from "@port7/user";
 import { useAuthStore } from "@port7/modules/auth/use-auth-store";
+import { showErrorToast } from "@port7/lib/show-error-toast";
+import { apiBaseUrl } from "@port7/lib/constants";
 
 const LETTERS_REGX = /^[a-zA-Z]+$/;
 
@@ -21,25 +23,6 @@ const HomePage: PageComponent<unknown> = () => {
   const [roomName, setRoomName] = React.useState(`${landingNickname}'s Room`);
   const [roomCode, setRoomCode] = React.useState("");
   const [isPrivate, setIsPrivate] = React.useState(false);
-
-  // React.useEffect(() => {
-  //   const fun = async () => {
-  //     if (!conn) return;
-  //     let result: any = await conn.sendCall("auth:request", {
-  //       nickname: "Joe",
-  //     });
-  //     let room: any = await conn.sendCall("room:create", {
-  //       name: "MYROOM",
-  //       isPrivate: true,
-  //       game: "rumble",
-  //     });
-  //     console.log("ROOM", room.data.message);
-  //     conn.sendCast("chat:send_msg", {
-  //       tokens: [{ t: "text", v: "Hello World!" }],
-  //     });
-  //   };
-  //   fun();
-  // }, [conn]);
 
   const handleNicknameChange = (nickname: string) => {
     setNickname(nickname);
@@ -68,6 +51,11 @@ const HomePage: PageComponent<unknown> = () => {
       isPrivate: isPrivate,
       game: "rumble",
     })) as RoomCreateResponse;
+
+    if (!response) {
+      showErrorToast("Error sending message to server!");
+      return;
+    }
 
     if (response.errors) return;
     const room = response.data as Room;
@@ -119,13 +107,13 @@ const HomePage: PageComponent<unknown> = () => {
                   <div className="w-full flex flex-row">
                     <button
                       onClick={() => setIsPrivate(!isPrivate)}
-                      className="mr-1 bg-secondary text-primary-900 w-1/2 p-2 font-bold rounded-md shadow-md hover:bg-secondary-hover transition"
+                      className="mr-1 bg-accent text-primary-100 w-1/2 p-2 font-bold rounded-md shadow-md hover:bg-accent-hover transition"
                     >
                       {isPrivate ? "PRIVATE" : "PUBLIC"}
                     </button>
                     <button
                       onClick={createRoom}
-                      className="ml-1 bg-accent text-primary-100 w-1/2 p-2 font-bold rounded-md shadow-md hover:bg-accent-hover transition"
+                      className="ml-1 bg-secondary text-primary-100 w-1/2 p-2 font-bold rounded-md shadow-md hover:bg-secondary-hover transition"
                     >
                       PLAY
                     </button>
@@ -146,7 +134,18 @@ const HomePage: PageComponent<unknown> = () => {
                       handleRoomCodeChange(e.currentTarget.value)
                     }
                   />
-                  <button className="bg-accent text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-accent-hover transition">
+                  <button className="bg-secondary text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-secondary-hover transition" onClick={async () => {
+                    const resp = await fetch(`${apiBaseUrl}/room/${roomCode}`).catch(() => {
+                      showErrorToast(`Error fetching room ${roomCode}`);
+                    });
+                    if (!resp) return;
+                    let json = await resp.json();
+                    if ("room" in json) {
+                      router.push(`/${roomCode}`);
+                    } else if ("error" in json) {
+                      showErrorToast(`Room ${roomCode} not found`);
+                    }
+                  }}>
                     JOIN
                   </button>
                 </div>

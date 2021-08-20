@@ -2,6 +2,8 @@
 /* https://coolors.co/256eff-cafe48-14fff7-1a1d1a-7a306c */
 /* https://coolors.co/256eff-ffa630-f15152-1a1d1a-05f140 */
 /* https://coolors.co/256eff-150578-a6cfd5-1a1d1a-c2e7d9 */
+/* https://coolors.co/256eff-f5853f-b5446e-1a1d1a-badefc */
+/* https://coolors.co/256eff-ad343e-419d78-1a1d1a-f39b6d */
 module.exports = {
   darkMode: "class",
   purge: {
@@ -62,6 +64,9 @@ module.exports = {
         DEFAULT: "var(--color-accent)",
         hover: "var(--color-accent-hover)",
         disabled: "var(--color-accent-disabled)",
+      },
+      error: {
+        DEFAULT: "var(--color-error)",
       },
       black: "#000",
     },

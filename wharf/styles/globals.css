@@ -30,13 +30,14 @@ p.bold {
   --color-primary-800: #151a21;
   --color-primary-900: #1a1d1a;
   --color-secondary-washed-out: #879eed;
-  --color-secondary: #A6CFD5;
-  --color-secondary-hover: #b3e0e7;
-  --color-ternary: #150578;
+  --color-secondary: #419D78;
+  --color-secondary-hover: #4ab58b;
+  --color-ternary: #AD343E;
   --color-accent-glow: #1563ff;
   --color-accent: #256eff;
   --color-accent-hover: #4281ff;
   --color-accent-disabled: #648cd9;
+  --color-error: #fd4d4d;
   --screen-height-reduction: 0px;
   --color-primary-100-translucent: rgba(222, 227, 234, 0.15);
 }
