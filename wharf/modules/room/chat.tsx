@@ -9,16 +9,34 @@ import { encode } from "./encode";
 export const Chat: React.FC = () => {
   const { messages } = useRoomChatStore();
   const [chatMessage, setChatMessage] = React.useState("");
+  const [waitingToSend, setWaitingToSend] = React.useState(false);
+  const [lastChatMessage, setLastChatMessage] = React.useState<
+    number | undefined
+  >();
   const conn = useConn();
   const chatListRef = React.useRef<HTMLDivElement | null>(null);
 
   // TODO: use tokens instead of just strings for now
   const handleSubmit = () => {
     if (chatMessage.length === 0) return;
+
+    const now = Date.now();
+    if (lastChatMessage && lastChatMessage + 1000 >= now) {
+      // We need to wait before sending another message
+      setWaitingToSend(true);
+      const diff = lastChatMessage + 1001 - now;
+      setTimeout(() => {
+        handleSubmit();
+      }, diff);
+      return;
+    }
+
+    setWaitingToSend(false);
     setChatMessage("");
     conn?.sendCast("chat:send_msg", {
       tokens: encode(chatMessage),
     });
+    setLastChatMessage(Date.now());
   };
 
   const windowSize = useResize();
@@ -113,10 +131,13 @@ export const Chat: React.FC = () => {
       </div>
       <div className="bg-primary-600 w-full h-16 rounded-lg mt-4">
         <input
-          className="w-full h-full bg-transparent focus:outline-none text-primary-100 px-5 text-xl"
+          className={`w-full h-full bg-transparent focus:outline-none ${
+            !waitingToSend ? "text-primary-100" : "text-primary-300"
+          } px-5 text-xl`}
           onChange={(e) => setChatMessage(e.target.value)}
           placeholder="Send a Message"
           value={chatMessage}
+          disabled={waitingToSend}
           onKeyPress={(e) => {
             if (e.key === "Enter") handleSubmit();
           }}
