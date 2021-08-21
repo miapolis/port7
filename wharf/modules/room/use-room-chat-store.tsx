@@ -27,6 +27,7 @@ export const useRoomChatStore = create(
   combine(
     {
       messages: [] as RoomChatMessage[],
+      isRoomChatScrolledToTop: false,
     },
     (set) => ({
       addMessage: (m: RoomChatMessage) =>
@@ -38,6 +39,10 @@ export const useRoomChatStore = create(
               : s.messages.slice(0, 100)),
           ],
         })),
+      setIsRoomChatScrolledToTop: (isRoomChatScrolledToTop: boolean) =>
+        set({
+          isRoomChatScrolledToTop,
+        }),
     })
   )
 );

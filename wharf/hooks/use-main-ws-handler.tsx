@@ -21,6 +21,7 @@ export const useMainWsHandler = () => {
       }),
       conn.addListener("chat:send", ({ data }: any) => {
         useRoomChatStore.getState().addMessage(data)
+        const { isRoomChatScrolledToTop } = useRoomChatStore.getState();
       }),
     ];
 

@@ -7,7 +7,6 @@ import { useRoomChatStore } from "./use-room-chat-store";
 import { encode } from "./encode";
 
 export const Chat: React.FC = () => {
-  const { messages } = useRoomChatStore();
   const [chatMessage, setChatMessage] = React.useState("");
   const [waitingToSend, setWaitingToSend] = React.useState(false);
   const [lastChatMessage, setLastChatMessage] = React.useState<
@@ -15,6 +14,15 @@ export const Chat: React.FC = () => {
   >();
   const conn = useConn();
   const chatListRef = React.useRef<HTMLDivElement | null>(null);
+  const inputFieldRef = React.useRef<HTMLInputElement | null>(null);
+  const { isRoomChatScrolledToTop, setIsRoomChatScrolledToTop, messages } =
+    useRoomChatStore();
+
+  React.useEffect(() => {
+    if (!isRoomChatScrolledToTop) {
+      chatListRef.current?.scrollTo(0, chatListRef.current.scrollHeight);
+    }
+  });
 
   // TODO: use tokens instead of just strings for now
   const handleSubmit = () => {
@@ -31,12 +39,16 @@ export const Chat: React.FC = () => {
       return;
     }
 
+    // Ensure the field remains focused if it became disabled
+    // with the rate limiting
     setWaitingToSend(false);
     setChatMessage("");
     conn?.sendCast("chat:send_msg", {
       tokens: encode(chatMessage),
     });
     setLastChatMessage(Date.now());
+
+    inputFieldRef.current?.focus();
   };
 
   const windowSize = useResize();
@@ -52,6 +64,14 @@ export const Chat: React.FC = () => {
       <div
         className={`flex px-5 flex-1 chat-message-container scrollbar-thin scrollbar-thumb-primary-700`}
         ref={chatListRef}
+        onScroll={() => {
+          if (!chatListRef.current) return;
+          const { scrollTop, offsetHeight, scrollHeight } = chatListRef.current;
+          const isOnBottom =
+            Math.abs(scrollTop + offsetHeight - scrollHeight) <= 1;
+
+          setIsRoomChatScrolledToTop(!isOnBottom);
+        }}
       >
         <div
           className="w-full h-full mt-auto"
@@ -129,15 +149,16 @@ export const Chat: React.FC = () => {
           )}
         </div>
       </div>
-      <div className="bg-primary-600 w-full h-16 rounded-lg mt-4">
+      <div className="bg-primary-600 w-full h-12 rounded-lg mt-4">
         <input
           className={`w-full h-full bg-transparent focus:outline-none ${
             !waitingToSend ? "text-primary-100" : "text-primary-300"
-          } px-5 text-xl`}
+          } px-4 text-md`}
           onChange={(e) => setChatMessage(e.target.value)}
           placeholder="Send a Message"
           value={chatMessage}
           disabled={waitingToSend}
+          ref={inputFieldRef}
           onKeyPress={(e) => {
             if (e.key === "Enter") handleSubmit();
           }}
