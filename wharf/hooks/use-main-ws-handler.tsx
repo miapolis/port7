@@ -1,6 +1,9 @@
 import React from "react";
 import { WebSocketContext } from "../modules/ws/ws-provider";
-import { useRoomChatStore, createSystemMessage } from "../modules/room/use-room-chat-store";
+import {
+  useRoomChatStore,
+  createSystemMessage,
+} from "../modules/room/use-room-chat-store";
 import { useRoomStore } from "@port7/modules/room/use-room-store";
 
 export const useMainWsHandler = () => {
@@ -10,18 +13,30 @@ export const useMainWsHandler = () => {
     if (!conn) return;
 
     const unsubs = [
-      conn.addListener("peer_join", ({data}: any) => {
+      /////////////////////////////////////////////////////////////////////////
+      ///// - PEER FUNCTIONS - ////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      conn.addListener("peer_join", ({ data }: any) => {
         useRoomStore.getState().addPeer(data.id, data.nickname);
-        useRoomChatStore.getState().addMessage(createSystemMessage(`${data.nickname} joined`));
+        useRoomChatStore
+          .getState()
+          .addMessage(createSystemMessage(`${data.nickname} joined`));
       }),
-      conn.addListener("peer_leave", ({data}: any) => {
-        const nickname = useRoomStore.getState().room?.peers.find(x => x.id === data.id)?.nickname
-        useRoomChatStore.getState().addMessage(createSystemMessage(`${nickname} left`));
+      conn.addListener("peer_leave", ({ data }: any) => {
+        const nickname = useRoomStore.getState().peers.get(data.id)?.nickname;
+        useRoomChatStore
+          .getState()
+          .addMessage(createSystemMessage(`${nickname} left`));
+        useRoomStore.getState().disconnectPeer(data.id);
+      }),
+      conn.addListener("remove_peer", ({ data }: any) => {
         useRoomStore.getState().removePeer(data.id);
       }),
+      /////////////////////////////////////////////////////////////////////////
+      ///// - CHAT FUNCTIONS - ////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
       conn.addListener("chat:send", ({ data }: any) => {
-        useRoomChatStore.getState().addMessage(data)
-        const { isRoomChatScrolledToTop } = useRoomChatStore.getState();
+        useRoomChatStore.getState().addMessage(data);
       }),
     ];
 

@@ -4,7 +4,6 @@ import { apiBaseUrl } from "@port7/lib/constants";
 import { WaitForWsAndAuth } from "@port7/modules/auth/wait-for-ws-auth";
 import { useConn } from "@port7/hooks/use-conn";
 import { Room } from "@port7/dock";
-import { WaitForSetUser } from "@port7/modules/room/wait-for-set-user";
 import { RoomEnter } from "@port7/modules/room/room-enter";
 import { useRoomStore } from "@port7/modules/room/use-room-store";
 import { Header } from "@port7/modules/room/header";
@@ -20,26 +19,25 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const roomStore = useRoomStore();
 
   React.useEffect(() => {
-    roomStore.setRoom(room ? { ...room, peers: [] } : room);
+    roomStore.setRoom(room);
+    roomStore.setPeers([]);
   }, [room]);
 
   return (
     <>
       {room ? (
         <WaitForWsAndAuth>
-          <WaitForSetUser room={room}>
-            {room ? (
-              <RoomEnter room={room}>
-                <div className="w-full h-full flex flex-col">
-                  <Header />
-                  <div className="flex flex-row h-full w-full overflow-hidden">
-                    <MainLayout />
-                    <Chat />
-                  </div>
+          {room ? (
+            <RoomEnter room={room}>
+              <div className="w-full h-full flex flex-col">
+                <Header />
+                <div className="flex flex-row h-full w-full overflow-hidden">
+                  <MainLayout />
+                  <Chat />
                 </div>
-              </RoomEnter>
-            ) : undefined}
-          </WaitForSetUser>
+              </div>
+            </RoomEnter>
+          ) : undefined}
         </WaitForWsAndAuth>
       ) : undefined}
     </>

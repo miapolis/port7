@@ -8,16 +8,15 @@ import { ProfileArea } from "../modules/landing/profile";
 import { GameSelection } from "../modules/landing/game-selection";
 import { useConn } from "@port7/hooks/use-conn";
 import { setPreferredNickname, useUserStore } from "@port7/user";
-import { useAuthStore } from "@port7/modules/auth/use-auth-store";
 import { showErrorToast } from "@port7/lib/show-error-toast";
 import { apiBaseUrl } from "@port7/lib/constants";
+import { getUserToken } from "@port7/lib/user-token";
 
 const LETTERS_REGX = /^[a-zA-Z]+$/;
 
 const HomePage: PageComponent<unknown> = () => {
   const conn = useConn();
   const router = useRouter();
-  const auth = useAuthStore();
   const landingNickname = useUserStore(state => state.user)?.nickname || "";
   const [nickname, setNickname] = React.useState(landingNickname);
   const [roomName, setRoomName] = React.useState(`${landingNickname}'s Room`);
@@ -35,17 +34,7 @@ const HomePage: PageComponent<unknown> = () => {
     setRoomCode(roomCode.toUpperCase());
   };
 
-  const createUser = async () => {
-    if (!conn) return;
-    let result: any = await conn.sendCall("auth:request", {
-      nickname: nickname,
-    });
-    auth.setIsAuthenticated(true);
-    // useUserStore.setState({ user: result });
-  };
-
   const createRoom = async () => {
-    await createUser();
     let response = (await conn?.sendCall("room:create", {
       name: roomName,
       isPrivate: isPrivate,

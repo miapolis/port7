@@ -1,3 +1,4 @@
+import { getUserToken } from "@port7/lib/user-token";
 import { KEY_NICKNAME, KEY_IS_PREFERRED_NICKNAME } from "../lib/local-storage";
 
 export type User = {
@@ -6,6 +7,8 @@ export type User = {
 };
 
 export const doInitialUser = (): User => {
+  getUserToken();
+
   let currentNickname = localStorage.getItem(KEY_NICKNAME);
   let isPreferredRaw = localStorage.getItem(KEY_IS_PREFERRED_NICKNAME);
   let isPreferred = isPreferredRaw ? rawToBool(isPreferredRaw) : false;

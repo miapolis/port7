@@ -22,13 +22,11 @@ defmodule Pier.Message.Room.Create do
     with {:ok, room_spec} <- apply_action(changeset, :validation),
          {:ok, %{room: room}} <-
            Harbor.Room.create_room(
-             state.user.user_id,
              room_spec.name,
              room_spec.isPrivate,
              room_spec.game
            ) do
-      user = %{state.user | current_room_id: room.id}
-      {:reply, room, %{state | user: user}}
+      {:reply, room, state}
     end
   end
 end

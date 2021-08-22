@@ -1,3 +1,5 @@
+export type GameType = "rumble";
+
 export type RoomCreateResponse = {
   data: Room | null,
   errors: string[] | undefined,
@@ -8,10 +10,11 @@ export type Room = {
   name: string,
   code: string,
   isPrivate: string,
-  peers: Peer[];
+  game: GameType,
 }
 
 export type Peer = {
   id: number;
   nickname: string;
+  isDisconnected: boolean;
 }

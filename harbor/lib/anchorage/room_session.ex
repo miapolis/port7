@@ -71,8 +71,8 @@ defmodule Anchorage.RoomSession do
     {:ok, struct(State, init)}
   end
 
-  def ws_fan(users, msg) do
-    Enum.each(Map.keys(users), fn uid ->
+  def ws_fan(peers, msg) do
+    Enum.each(Map.keys(peers), fn uid ->
       Anchorage.UserSession.send_ws(uid, nil, msg)
     end)
   end
@@ -100,7 +100,7 @@ defmodule Anchorage.RoomSession do
 
     if not is_nil(user) do
       unless opts[:no_fan] do
-        ws_fan(state.peers, %{
+        ws_fan(:maps.filter(fn uid, _ -> uid != user_id end, state.peers), %{
           op: "peer_join",
           d: %{
             id: peer.id,
@@ -117,14 +117,30 @@ defmodule Anchorage.RoomSession do
      }}
   end
 
-  def leave_room(room_id, user_id), do: cast(room_id, {:leave_room, user_id})
+  def disconnect_from_room(room_id, user_id), do: cast(room_id, {:disconnect_from_room, user_id})
 
-  defp leave_room_impl(user_id, state) do
+  defp disconnect_from_room_impl(user_id, state) do
+    {:ok, peer} = Map.fetch(state.peers, user_id)
+    peers = Map.replace!(state.peers, user_id, %{peer | is_disconnected: true})
+
+    ws_fan(peers, %{
+      op: "peer_leave",
+      d: %{id: peer.id}
+    })
+
+    {:noreply, %{state | peers: peers}}
+  end
+
+  def remove_from_room(room_id, user_id) do
+    cast(room_id, {:remove_from_room, user_id})
+  end
+
+  defp remove_from_room_impl(user_id, state) do
     {:ok, peer} = Map.fetch(state.peers, user_id)
     peers = Map.delete(state.peers, user_id)
 
     ws_fan(peers, %{
-      op: "peer_leave",
+      op: "remove_peer",
       d: %{id: peer.id}
     })
 
@@ -138,5 +154,8 @@ defmodule Anchorage.RoomSession do
   def handle_cast({:join_room, user_id, peer, opts}, state),
     do: join_room_impl(user_id, peer, opts, state)
 
-  def handle_cast({:leave_room, user_id}, state), do: leave_room_impl(user_id, state)
+  def handle_cast({:disconnect_from_room, user_id}, state),
+    do: disconnect_from_room_impl(user_id, state)
+
+  def handle_cast({:remove_from_room, user_id}, state), do: remove_from_room_impl(user_id, state)
 end

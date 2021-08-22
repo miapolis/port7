@@ -5,15 +5,14 @@ defmodule Harbor.Room do
   @max_room_size 100
 
   def create_room(
-        user_id,
         room_name,
         is_private,
         game
       ) do
-    IO.puts("creating room...")
     id = Ecto.UUID.generate()
     # TODO: store codes to prevent duplication (probably just a genserver)
     code = Habor.Utils.GenCode.room_code()
+    IO.puts("ID " <> id)
 
     room = %Jetty.Room{
       id: id,
@@ -38,12 +37,28 @@ defmodule Harbor.Room do
   end
 
   def join_room(room_id, user_id) do
-    current_room_id = Anchorage.UserSession.get_current_room_id(user_id)
+    user_state = Anchorage.UserSession.get_state(user_id)
+    current_room_id = user_state.current_room_id
+    is_disconnected = user_state.is_disconnected
 
-    if current_room_id == room_id do
+    if current_room_id == room_id and is_disconnected do
       room = Anchorage.RoomSession.get_state(room_id)
-      peer_id = Map.fetch!(room.peers, user_id)
-      %{room: room, peer_id: peer_id}
+      peer = Map.fetch!(room.peers, user_id)
+      # If they reconnected, now they are no longer disconnected
+      new_peer = %Peer{
+        id: peer.id,
+        is_disconnected: false,
+        nickname: peer.nickname,
+        roles: peer.roles
+      }
+
+      Anchorage.UserSession.reconnect(user_id)
+      Anchorage.RoomSession.join_room(room.room_id, user_id, new_peer)
+
+      Anchorage.PubSub.subscribe("chat:" <> room_id)
+
+      Map.replace!(room.peers, user_id, new_peer)
+      %{room: room, peer_id: peer.id}
     else
       case can_join_room(room_id, user_id) do
         {:error, message} ->
@@ -51,7 +66,20 @@ defmodule Harbor.Room do
 
         {:ok, room} ->
           peer_id = gen_peer_id(room)
-          peer = %Peer{id: peer_id, nickname: Anchorage.UserSession.get(user_id, :nickname)}
+
+          roles =
+            if Enum.count(room.peers) == 0 do
+              ["leader"]
+            else
+              []
+            end
+
+          peer = %Peer{
+            id: peer_id,
+            is_disconnected: false,
+            nickname: Anchorage.UserSession.get(user_id, :nickname),
+            roles: roles
+          }
 
           Anchorage.RoomSession.join_room(room.room_id, user_id, peer)
 
@@ -76,7 +104,6 @@ defmodule Harbor.Room do
     end
   end
 
-  # @spec get_by_code(String.t()) :: Anchorage.RoomSession.State.t() | nil
   def get_by_code(code) do
     room_id = Anchorage.RoomCode.get(code)
 
@@ -87,14 +114,22 @@ defmodule Harbor.Room do
     end
   end
 
-  def leave_room(user_id, current_room_id) do
+  # NOTE: Not to be confused with voluntarily leaving the room,
+  # here, the user may have been disconnected due to a bad internet
+  # connection and therefore we need to wait a minute before we completely
+  # kick them from the room
+  def disconnect_from_room(current_room_id, user_id) do
     if current_room_id do
-      Anchorage.RoomSession.leave_room(current_room_id, user_id)
+      Anchorage.RoomSession.disconnect_from_room(current_room_id, user_id)
 
       PubSub.unsubscribe("chat:" <> current_room_id)
 
       {:ok, %{roomId: current_room_id}}
     end
+  end
+
+  def remove_user(current_room_id, user_id) do
+    Anchorage.RoomSession.remove_from_room(current_room_id, user_id)
   end
 
   def gen_peer_id(room_state) do
