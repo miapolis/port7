@@ -10,7 +10,6 @@ import { useConn } from "@port7/hooks/use-conn";
 import { setPreferredNickname, useUserStore } from "@port7/user";
 import { showErrorToast } from "@port7/lib/show-error-toast";
 import { apiBaseUrl } from "@port7/lib/constants";
-import { getUserToken } from "@port7/lib/user-token";
 
 const LETTERS_REGX = /^[a-zA-Z]+$/;
 

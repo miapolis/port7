@@ -41,24 +41,28 @@ defmodule Harbor.Room do
     current_room_id = user_state.current_room_id
     is_disconnected = user_state.is_disconnected
 
-    if current_room_id == room_id and is_disconnected do
-      room = Anchorage.RoomSession.get_state(room_id)
-      peer = Map.fetch!(room.peers, user_id)
-      # If they reconnected, now they are no longer disconnected
-      new_peer = %Peer{
-        id: peer.id,
-        is_disconnected: false,
-        nickname: peer.nickname,
-        roles: peer.roles
-      }
+    if current_room_id == room_id do
+      if is_disconnected do
+        room = Anchorage.RoomSession.get_state(room_id)
+        peer = Map.fetch!(room.peers, user_id)
+        # If they reconnected, now they are no longer disconnected
+        new_peer = %Peer{
+          id: peer.id,
+          is_disconnected: false,
+          nickname: peer.nickname,
+          roles: peer.roles
+        }
 
-      Anchorage.UserSession.reconnect(user_id)
-      Anchorage.RoomSession.join_room(room.room_id, user_id, new_peer)
+        Anchorage.UserSession.reconnect(user_id)
+        Anchorage.RoomSession.join_room(room.room_id, user_id, new_peer)
 
-      Anchorage.PubSub.subscribe("chat:" <> room_id)
+        Anchorage.PubSub.subscribe("chat:" <> room_id)
 
-      Map.replace!(room.peers, user_id, new_peer)
-      %{room: room, peer_id: peer.id}
+        Map.replace!(room.peers, user_id, new_peer)
+        %{room: room, peer_id: peer.id}
+      else
+        %{error: "already connected"}
+      end
     else
       case can_join_room(room_id, user_id) do
         {:error, message} ->

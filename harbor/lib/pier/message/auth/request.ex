@@ -26,9 +26,14 @@ defmodule Pier.Message.Auth.Request do
 
   def execute(changeset, state) do
     with {:ok, request} <- apply_action(changeset, :validate) do
-      {:ok, user} = Harbor.Auth.authenticate(request, state.ip)
-      IO.puts("AUTH " <> inspect(user))
-      {:reply, %{}, %{state | user: user}}
+      case Harbor.Auth.authenticate(request, state.ip) do
+        {:ok, user} ->
+          IO.puts("AUTH" <> inspect(user))
+          {:reply, %{}, %{state | user: user}}
+        {:error, reason} ->
+          IO.puts reason
+          {:reply, %{error: reason}, state}
+      end
     else
       _ -> {:close, 4001, "invalid_authentication"}
     end

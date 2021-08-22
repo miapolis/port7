@@ -13,6 +13,9 @@ export const WaitForWsAndAuth: React.FC = ({ children }) => {
   const [nickname, setNickname] = React.useState(landingNickname);
   const [waiting, setWaiting] = React.useState(true);
   const [didAuth, setDidAuth] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | undefined>(
+    undefined
+  );
 
   React.useEffect(() => {
     setTimeout(() => setWaiting(false), 500);
@@ -40,12 +43,32 @@ export const WaitForWsAndAuth: React.FC = ({ children }) => {
     if (!conn || !user.user) return;
     if (didAuth) return;
 
-    await conn.sendCall("auth:request", {
+    const reply: any = await conn.sendCall("auth:request", {
       nickname: nickname,
       userToken: getUserToken(),
     });
+    if (reply.data.error) {
+      switch (reply.data.error) {
+        case "already authenticated":
+          setErrorMessage("You're already connected in another tab")
+          break;
+      }
+      return;
+    }
+
     setDidAuth(true);
   };
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col m-auto items-center">
+        <div className="text-5xl font-bold text-primary-200 mb-4">OOPS!</div>
+        <div className="text-2xl text-primary-100">
+          {errorMessage}
+        </div>
+      </div>
+    );
+  }
 
   if (!conn || waiting) {
     return (
