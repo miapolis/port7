@@ -16,7 +16,6 @@ export type RoomChatMessageToken = TextToken | LinkToken;
 
 export interface RoomChatMessage {
   id: string;
-  from: string;
   sentAt: string;
   nickname: string;
   tokens: RoomChatMessageToken[];
@@ -53,7 +52,6 @@ export const createSystemMessage = (text: string): RoomChatMessage => {
   return {
     id: uuidv4(),
     isSystem: true,
-    from: "",
     sentAt: "",
     nickname: "",
     tokens: [{ t: "text", v: text }],

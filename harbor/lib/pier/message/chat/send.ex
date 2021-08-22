@@ -4,7 +4,7 @@ defmodule Pier.Message.Chat.Send do
 
   @message_character_limit 100
 
-  @derive {Jason.Encoder, only: [:id, :tokens, :from, :sentAt, :nickname]}
+  @derive {Jason.Encoder, only: [:id, :tokens, :sentAt, :nickname]}
 
   @primary_key false
   embedded_schema do
