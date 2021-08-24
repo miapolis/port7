@@ -8,7 +8,8 @@ import { RoomEnter } from "@port7/modules/room/room-enter";
 import { useRoomStore } from "@port7/modules/room/use-room-store";
 import { Header } from "@port7/modules/room/header";
 import { MainLayout } from "@port7/modules/room/main-layout";
-import { Chat } from "@port7/modules/room/chat";
+import { ChatPanel } from "@port7/modules/room/chat-panel";
+import { ManagePeerModal } from "@port7/modules/room/manage-peer-modal";
 
 interface RoomPageProps {
   room?: Room;
@@ -17,6 +18,8 @@ interface RoomPageProps {
 const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const conn = useConn();
   const roomStore = useRoomStore();
+
+  const [managePeerModalOpen, setManagePeerModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     roomStore.setRoom(room);
@@ -33,8 +36,12 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
                 <Header />
                 <div className="flex flex-row h-full w-full overflow-hidden">
                   <MainLayout />
-                  <Chat />
+                  <ChatPanel />
                 </div>
+                <ManagePeerModal
+                  open={managePeerModalOpen}
+                  onClose={() => setManagePeerModalOpen(false)}
+                />
               </div>
             </RoomEnter>
           ) : undefined}

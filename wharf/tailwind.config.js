@@ -59,6 +59,7 @@ module.exports = {
       },
       ternary: {
         DEFAULT: "var(--color-ternary)",
+        hover: "var(--color-ternary-hover)",
       },
       accent: {
         DEFAULT: "var(--color-accent)",

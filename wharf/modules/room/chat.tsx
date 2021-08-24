@@ -60,7 +60,7 @@ export const Chat: React.FC = () => {
   });
 
   return (
-    <div className="w-96 bg-primary-700 flex flex-col p-5">
+    <>
       <div
         className={`flex px-5 flex-1 chat-message-container scrollbar-thin scrollbar-thumb-primary-700`}
         ref={chatListRef}
@@ -164,6 +164,6 @@ export const Chat: React.FC = () => {
           }}
         />
       </div>
-    </div>
+    </>
   );
 };

@@ -10,9 +10,7 @@ defmodule Harbor.Room do
         game
       ) do
     id = Ecto.UUID.generate()
-    # TODO: store codes to prevent duplication (probably just a genserver)
-    code = Habor.Utils.GenCode.room_code()
-    IO.puts("ID " <> id)
+    code = gen_unique_code()
 
     room = %Jetty.Room{
       id: id,
@@ -94,6 +92,16 @@ defmodule Harbor.Room do
     end
   end
 
+  def gen_unique_code() do
+    code = Habor.Utils.GenCode.room_code()
+
+    if not is_nil(Anchorage.RoomCode.get(code)) do
+      gen_unique_code()
+    else
+      code
+    end
+  end
+
   # TODO: In the future, we will have room blocks and all that
   def can_join_room(room_id, _user_id) do
     room = Anchorage.RoomSession.get_state(room_id)
@@ -116,6 +124,10 @@ defmodule Harbor.Room do
     else
       nil
     end
+  end
+
+  def get_profiles(room_id) do
+    Anchorage.RoomSession.get_state(room_id).peers
   end
 
   # NOTE: Not to be confused with voluntarily leaving the room,

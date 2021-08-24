@@ -75,6 +75,8 @@ export const connect = ({
 
     socket.addEventListener("close", (error) => {
       console.log(error);
+      socket.close();
+
       if (!waitToReconnect) reject(error);
     });
 

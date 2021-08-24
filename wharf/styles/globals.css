@@ -32,7 +32,8 @@ p.bold {
   --color-secondary-washed-out: #879eed;
   --color-secondary: #419D78;
   --color-secondary-hover: #4ab58b;
-  --color-ternary: #AD343E;
+  --color-ternary: #c53e49;
+  --color-ternary-hover: #d2444f;
   --color-accent-glow: #1563ff;
   --color-accent: #256eff;
   --color-accent-hover: #4281ff;

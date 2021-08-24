@@ -30,8 +30,9 @@ defmodule Pier.Message.Auth.Request do
         {:ok, user} ->
           IO.puts("AUTH" <> inspect(user))
           {:reply, %{}, %{state | user: user}}
+
         {:error, reason} ->
-          IO.puts reason
+          IO.puts(reason)
           {:reply, %{error: reason}, state}
       end
     else
