@@ -81,13 +81,11 @@ export const connect = ({
     });
 
     socket.addEventListener("message", (e) => {
-      console.log("INBOUND");
       if (e.data === `"pong"` || e.data === `pong`) {
         return;
       }
 
       const message = JSON.parse(e.data);
-      console.log(message);
       const data = message.d || message.p || message.payload;
       const errors = message.e || message.errors;
       const operator = message.op || message.operator;
@@ -123,7 +121,6 @@ export const connect = ({
             const unsubscribe = connection.addListener(
               doneOpcode ?? opcode + ":reply",
               (data) => {
-                console.log("Received data!");
                 if (timeoutId) clearTimeout(timeoutId);
 
                 unsubscribe();

@@ -20,7 +20,7 @@ export const PeerList: React.FC = () => {
   return (
     <div>
       {profileStore.profiles.map((p) => (
-        <PeerItem peer={p} isMe={p.id === room.myPeerId} />
+        <PeerItem peer={p} isMe={p.id === room.myPeerId} key={p.id} />
       ))}
     </div>
   );
@@ -33,15 +33,10 @@ interface PeerItemProps {
 
 const PeerItem = ({ peer, isMe }: PeerItemProps) => {
   const [manageUserIconHover, setManagerUserIconHover] = React.useState(false);
-  const [canManage, setCanManage] = React.useState(
-    !isMe && myIntents().includes("MANAGE PEERS")
-  );
+  const canManage = !isMe && myIntents().includes("MANAGE PEERS");
 
   return (
-    <div
-      className="bg-primary-600 rounded-md w-full p-4 mb-4 flex items-center relative transition"
-      key={peer.id}
-    >
+    <div className="bg-primary-600 rounded-md w-full p-4 mb-4 flex items-center relative transition">
       <div className="flex flex-col ">
         <div className="flex">
           <div className="text-primary-100">{peer.nickname}</div>
