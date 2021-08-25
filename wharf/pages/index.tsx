@@ -16,7 +16,7 @@ const LETTERS_REGX = /^[a-zA-Z]+$/;
 const HomePage: PageComponent<unknown> = () => {
   const conn = useConn();
   const router = useRouter();
-  const landingNickname = useUserStore(state => state.user)?.nickname || "";
+  const landingNickname = useUserStore((state) => state.user)?.nickname || "";
   const [nickname, setNickname] = React.useState(landingNickname);
   const [roomName, setRoomName] = React.useState(`${landingNickname}'s Room`);
   const [roomCode, setRoomCode] = React.useState("");
@@ -25,7 +25,7 @@ const HomePage: PageComponent<unknown> = () => {
   const handleNicknameChange = (nickname: string) => {
     setNickname(nickname);
     setPreferredNickname(nickname);
-  }
+  };
 
   const handleRoomCodeChange = (roomCode: string) => {
     if (roomCode.length > 4) return;
@@ -60,7 +60,10 @@ const HomePage: PageComponent<unknown> = () => {
       </Head>
       <div className="flex flex-col w-full">
         <div className="top-0 h-20 w-full">
-          <ProfileArea nickname={nickname} onNicknameChange={handleNicknameChange} />
+          <ProfileArea
+            nickname={nickname}
+            onNicknameChange={handleNicknameChange}
+          />
         </div>
         <div className="w-full h-full flex">
           <div className="m-auto bg-primary-600 p-8 rounded-lg shadow-2xl flex flex-col">
@@ -122,18 +125,23 @@ const HomePage: PageComponent<unknown> = () => {
                       handleRoomCodeChange(e.currentTarget.value)
                     }
                   />
-                  <button className="bg-secondary text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-secondary-hover transition" onClick={async () => {
-                    const resp = await fetch(`${apiBaseUrl}/room/${roomCode}`).catch(() => {
-                      showErrorToast(`Error fetching room ${roomCode}`);
-                    });
-                    if (!resp) return;
-                    let json = await resp.json();
-                    if ("room" in json) {
-                      router.push(`/${roomCode}`);
-                    } else if ("error" in json) {
-                      showErrorToast(`Room ${roomCode} not found`);
-                    }
-                  }}>
+                  <button
+                    className="bg-secondary text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-secondary-hover transition"
+                    onClick={async () => {
+                      const resp = await fetch(
+                        `${apiBaseUrl}/room/${roomCode}`
+                      ).catch(() => {
+                        showErrorToast(`Error fetching room ${roomCode}`);
+                      });
+                      if (!resp) return;
+                      let json = await resp.json();
+                      if ("room" in json) {
+                        router.push(`/${roomCode}`);
+                      } else if ("error" in json) {
+                        showErrorToast(`Room ${roomCode} not found`);
+                      }
+                    }}
+                  >
                     JOIN
                   </button>
                 </div>

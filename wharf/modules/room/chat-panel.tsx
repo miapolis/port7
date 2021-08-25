@@ -1,9 +1,9 @@
 import React from "react";
 import { Chat } from "./chat";
 import { ChatPanelIcon } from "./chat-panel-icon";
-import SmsRoundedIcon from '@material-ui/icons/SmsRounded';
-import PeopleIcon from '@material-ui/icons/People';
-import ArrowBackRoundedIcon from '@material-ui/icons/ArrowBackRounded';
+import SmsRoundedIcon from "@material-ui/icons/SmsRounded";
+import PeopleIcon from "@material-ui/icons/People";
+import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
 import { PeerList } from "./peer-list";
 
 export const ChatPanel: React.FC = () => {
@@ -29,10 +29,7 @@ export const ChatPanel: React.FC = () => {
         />
       </div>
       <div className="flex flex-col p-5 flex-1 overflow-hidden">
-        {
-          selection === 1 ?
-          <Chat /> : <PeerList />
-        }
+        {selection === 1 ? <Chat /> : <PeerList />}
       </div>
       {/* <div className="w-full flex flex-1 p">
       </div> */}

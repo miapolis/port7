@@ -8,13 +8,13 @@ export const myIntents = (): Intent[] => {
   const roles = self.roles;
   let intents = new Array<Intent>();
 
-  roles.forEach(role => {
+  roles.forEach((role) => {
     switch (role.toLowerCase()) {
       case "leader":
         intents = intents.concat(["MANAGE PEERS", "PROMOTE PEERS"]);
         break;
     }
-  })
+  });
 
   return intents;
 };

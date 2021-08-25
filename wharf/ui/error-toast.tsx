@@ -1,5 +1,5 @@
 import React from "react";
-import CloseRoundedIcon from '@material-ui/icons/CloseRounded';
+import CloseRoundedIcon from "@material-ui/icons/CloseRounded";
 
 export type ToastDurations = "default" | "sticky";
 
@@ -50,4 +50,3 @@ export const ErrorToast: React.FC<ErrorMessageProps> = ({
     </div>
   );
 };
-

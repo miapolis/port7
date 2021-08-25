@@ -10,7 +10,7 @@ export const useProfilesStore = create<ProfilesState>((set) => ({
   profiles: [],
   setProfiles: (profiles: ManagedPeer[]) => {
     set((_state) => ({
-      profiles: profiles
+      profiles: profiles,
     }));
   },
 }));

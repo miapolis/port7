@@ -17,10 +17,9 @@ export const GameSelection: React.FC<GameSelectionProps> = ({
     <div
       className={
         !disabled
-          ? (
-            !selected ? "bg-accent m-h-24 p-3 mb-3 hover:bg-accent-hover transition-colors cursor-pointer rounded-md shadow-md"
+          ? !selected
+            ? "bg-accent m-h-24 p-3 mb-3 hover:bg-accent-hover transition-colors cursor-pointer rounded-md shadow-md"
             : "bg-accent m-h-24 p-3 mb-3 hover:bg-accent-hover transition-colors cursor-pointer rounded-md shadow-md ring-2 ring-primary-100"
-          )
           : "bg-accent-disabled m-h-2 p-3 rounded-md"
       }
     >

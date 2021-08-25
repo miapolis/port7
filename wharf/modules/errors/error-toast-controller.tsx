@@ -10,7 +10,7 @@ export const ErrorToastController: React.FC = () => {
       style={{ zIndex: 1001 }}
       className={`flex w-full fixed top-10 justify-center opacity-90`}
     >
-      <div style={{width: "600px"}}>
+      <div style={{ width: "600px" }}>
         <div className={`flex flex-col w-full`}>
           <div className="flex flex-col w-full">
             {toasts.map((t) => (

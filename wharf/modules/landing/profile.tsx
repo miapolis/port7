@@ -5,7 +5,10 @@ export interface ProfileAreaProps {
   onNicknameChange: (nickname: string) => void;
 }
 
-export const ProfileArea: React.FC<ProfileAreaProps> = ({ nickname, onNicknameChange }) => {
+export const ProfileArea: React.FC<ProfileAreaProps> = ({
+  nickname,
+  onNicknameChange,
+}) => {
   return (
     <div className="h-full w-full flex align-middle justify-center p-5">
       <input

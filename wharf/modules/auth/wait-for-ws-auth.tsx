@@ -50,7 +50,7 @@ export const WaitForWsAndAuth: React.FC = ({ children }) => {
     if (reply.data.error) {
       switch (reply.data.error) {
         case "already authenticated":
-          setErrorMessage("You're already connected in another tab")
+          setErrorMessage("You're already connected in another tab");
           break;
       }
       return;
@@ -63,9 +63,7 @@ export const WaitForWsAndAuth: React.FC = ({ children }) => {
     return (
       <div className="flex flex-col m-auto items-center">
         <div className="text-5xl font-bold text-primary-200 mb-4">OOPS!</div>
-        <div className="text-2xl text-primary-100">
-          {errorMessage}
-        </div>
+        <div className="text-2xl text-primary-100">{errorMessage}</div>
       </div>
     );
   }
