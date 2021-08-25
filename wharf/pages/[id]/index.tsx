@@ -2,7 +2,6 @@ import React from "react";
 import { PageComponent } from "@port7/types/page-component";
 import { apiBaseUrl } from "@port7/lib/constants";
 import { WaitForWsAndAuth } from "@port7/modules/auth/wait-for-ws-auth";
-import { useConn } from "@port7/hooks/use-conn";
 import { Room } from "@port7/dock";
 import { RoomEnter } from "@port7/modules/room/room-enter";
 import { useRoomStore } from "@port7/modules/room/use-room-store";
@@ -17,7 +16,6 @@ interface RoomPageProps {
 }
 
 const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
-  const conn = useConn();
   const roomStore = useRoomStore();
   const peerModalStore = usePeerModalStore();
 
@@ -30,21 +28,19 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
     <>
       {room ? (
         <WaitForWsAndAuth>
-          {room ? (
-            <RoomEnter room={room}>
-              <div className="w-full h-full flex flex-col">
-                <Header />
-                <div className="flex flex-row h-full w-full overflow-hidden">
-                  <MainLayout />
-                  <ChatPanel />
-                </div>
-                <ManagePeerModal
-                  open={peerModalStore.open}
-                  onClose={() => peerModalStore.setOpen(false)}
-                />
+          <RoomEnter room={room}>
+            <div className="w-full h-full flex flex-col">
+              <Header />
+              <div className="flex flex-row h-full w-full overflow-hidden">
+                <MainLayout />
+                <ChatPanel />
               </div>
-            </RoomEnter>
-          ) : undefined}
+              <ManagePeerModal
+                open={peerModalStore.open}
+                onClose={() => peerModalStore.setOpen(false)}
+              />
+            </div>
+          </RoomEnter>
         </WaitForWsAndAuth>
       ) : undefined}
     </>

@@ -10,6 +10,7 @@ export interface RoomEnterProps {
 
 export const RoomEnter: React.FC<RoomEnterProps> = ({ room, children }) => {
   const conn = useConn();
+  const roomStore = useRoomStore();
 
   React.useEffect(() => {
     const func = async () => {
@@ -23,6 +24,23 @@ export const RoomEnter: React.FC<RoomEnterProps> = ({ room, children }) => {
     };
     func();
   }, []);
+
+  if (roomStore && roomStore.dcReason) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="flex flex-col m-auto items-center">
+          <div className="text-5xl font-bold text-primary-200 mb-4">
+            DISCONNECTED
+          </div>
+          <div className="text-2xl text-primary-100">
+            {roomStore.dcReason === "kick"
+              ? "You have been kicked"
+              : "You have been disconnected"}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
 };

@@ -3,9 +3,11 @@ import { Peer, Role, Room } from "@port7/dock/lib";
 
 interface RoomState {
   room: Room | undefined;
+  dcReason: undefined | string;
   myPeerId: number;
   peers: Map<number, Peer>;
   setRoom: (room: Room | undefined) => void;
+  setDisconnected: (reason: string) => void;
   setMyPeerId: (id: number) => void;
   setPeers: (peer: Peer[]) => void;
   addPeer: (id: number, nickname: string, roles: Role[]) => void;
@@ -15,11 +17,17 @@ interface RoomState {
 
 export const useRoomStore = create<RoomState>((set) => ({
   room: undefined,
+  dcReason: undefined,
   myPeerId: -1,
   peers: new Map(),
   setRoom: (room: Room | undefined) => {
     set((_state) => ({
       room: room,
+    }));
+  },
+  setDisconnected: (reason: string) => {
+    set((_state) => ({
+      dcReason: reason,
     }));
   },
   setMyPeerId: (id: number) => {
@@ -34,7 +42,12 @@ export const useRoomStore = create<RoomState>((set) => ({
   },
   addPeer: (id: number, nickname: string, roles: Role[]) => {
     set((state) => ({
-      peers: state.peers.set(id, { id, nickname, isDisconnected: false, roles: roles}),
+      peers: state.peers.set(id, {
+        id,
+        nickname,
+        isDisconnected: false,
+        roles: roles,
+      }),
     }));
   },
   disconnectPeer: (id: number) => {
@@ -45,7 +58,7 @@ export const useRoomStore = create<RoomState>((set) => ({
           id,
           nickname: peer?.nickname || "",
           isDisconnected: true,
-          roles: peer?.roles || []
+          roles: peer?.roles || [],
         }),
       };
     });

@@ -52,6 +52,12 @@ export const useMainWsHandler = () => {
       conn.addListener("chat:send", ({ data }: any) => {
         useRoomChatStore.getState().addMessage(data);
       }),
+      /////////////////////////////////////////////////////////////////////////
+      ///// - GENERAL FUNCTIONS - /////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      conn.addListener("kicked", ({ data }: any) => {
+        useRoomStore.getState().setDisconnected(data.type);
+      }),
     ];
 
     return () => {
