@@ -91,6 +91,12 @@ defmodule Anchorage.Chat do
     end
   end
 
+  def remove_user(room_id, user_id), do: cast(room_id, {:remove_user, user_id})
+
+  defp remove_user_impl(user_id, state) do
+    {:noreply, %{state | users: Enum.reject(state.users, &(&1 == user_id))}}
+  end
+
   ### - SEND MESSAGE - ################################################################
 
   def send_msg(room_id, payload) do
@@ -134,5 +140,6 @@ defmodule Anchorage.Chat do
 
   def handle_cast({:set_room_creator_id, id}, state), do: set_room_creator_id_impl(id, state)
   def handle_cast({:add_user, user_id}, state), do: add_user_impl(user_id, state)
+  def handle_cast({:remove_user, user_id}, state), do: remove_user_impl(user_id, state)
   def handle_cast({:send_msg, message}, state), do: send_msg_impl(message, state)
 end

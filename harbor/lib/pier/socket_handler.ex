@@ -44,6 +44,21 @@ defmodule Pier.SocketHandler do
     ws_push(prepare_socket_msg(message), state)
   end
 
+  def unsub(socket, topic), do: send(socket, {:unsub, topic})
+
+  alias Anchorage.PubSub
+
+  defp unsub_impl(topic, state) do
+    PubSub.unsubscribe(topic)
+    ws_push(nil, state)
+  end
+
+  def clear_current_room(socket), do: send(socket, {:clear_current_room})
+
+  defp clear_current_room_impl(state) do
+    ws_push(nil, %{state | user: %{state.user | current_room_id: nil}})
+  end
+
   ### - CHAT MESSAGES - #######################################################
 
   defp real_chat_impl({"chat:" <> _room_id, message}, %__MODULE__{} = state) do
@@ -165,6 +180,8 @@ defmodule Pier.SocketHandler do
   def websocket_info({:EXIT, _, _}, state), do: exit_impl(state)
   def websocket_info(:exit, state), do: exit_impl(state)
   def websocket_info({:remote_send, message}, state), do: remote_send_impl(message, state)
+  def websocket_info({:unsub, topic}, state), do: unsub_impl(topic, state)
+  def websocket_info({:clear_current_room}, state), do: clear_current_room_impl(state)
   def websocket_info(message = {"chat:" <> _, _}, state), do: chat_impl(message, state)
 
   def websocket_info(_, state) do

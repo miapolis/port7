@@ -1,18 +1,34 @@
 import React from "react";
+import { useConn } from "@port7/hooks/use-conn";
+import { getProfiles } from "./peer-list";
 import { useManagePeerStore } from "./use-manage-peer-store";
+import { usePeerModalStore } from "./use-peer-modal-store";
 
 export interface ManagePeerModalProps {
   open?: boolean;
   onClose?: () => void;
 }
 
+type ActionType = "kick" | "ban" | "promote mod" | "demote mod";
+
 export const ManagePeerModal: React.FC<ManagePeerModalProps> = ({
   open = false,
   onClose,
 }) => {
+  const conn = useConn();
   const peer = useManagePeerStore().peer;
 
   if (!open || !peer) return null;
+
+  const onAction = async (action: ActionType) => {
+    switch (action) {
+      case "kick":
+        conn?.sendCast("room:kick", { id: peer.id });
+        break;
+    }
+    usePeerModalStore.getState().setOpen(false);
+    getProfiles(conn);
+  };
 
   return (
     <div className="fixed w-full h-full z-10">
@@ -27,11 +43,17 @@ export const ManagePeerModal: React.FC<ManagePeerModalProps> = ({
             } ${peer.id}`}</div>
           </div>
           <div className="text-primary-100 text-lg mb-3">Actions</div>
-          <button className="bg-accent mb-3 text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-accent-hover transition">
+          <button
+            onClick={() => onAction("kick")}
+            className="bg-accent mb-3 text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-accent-hover transition"
+          >
             KICK
           </button>
-          <button className="bg-ternary text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-ternary-hover transition">
+          <button className="bg-ternary mb-3 text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-ternary-hover transition">
             BAN
+          </button>
+          <button className="bg-secondary text-primary-100 p-2 font-bold rounded-md shadow-md hover:bg-secondary-hover transition">
+            PROMOTE TO MOD
           </button>
         </div>
         <div

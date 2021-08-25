@@ -131,17 +131,19 @@ defmodule Anchorage.RoomSession do
     {:noreply, %{state | peers: peers}}
   end
 
-  def remove_from_room(room_id, user_id) do
-    cast(room_id, {:remove_from_room, user_id})
+  def remove_from_room(room_id, user_id, action \\ :default) do
+    cast(room_id, {:remove_from_room, user_id, action})
   end
 
-  defp remove_from_room_impl(user_id, state) do
+  defp remove_from_room_impl(user_id, action, state) do
     {:ok, peer} = Map.fetch(state.peers, user_id)
     peers = Map.delete(state.peers, user_id)
 
+    Anchorage.Chat.remove_user(state.room_id, user_id)
+
     ws_fan(peers, %{
       op: "remove_peer",
-      d: %{id: peer.id}
+      d: %{id: peer.id, action: action}
     })
 
     {:noreply, %{state | peers: peers}}
@@ -157,5 +159,5 @@ defmodule Anchorage.RoomSession do
   def handle_cast({:disconnect_from_room, user_id}, state),
     do: disconnect_from_room_impl(user_id, state)
 
-  def handle_cast({:remove_from_room, user_id}, state), do: remove_from_room_impl(user_id, state)
+  def handle_cast({:remove_from_room, user_id, action}, state), do: remove_from_room_impl(user_id, action, state)
 end

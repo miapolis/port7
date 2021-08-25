@@ -7,6 +7,6 @@ defmodule Harbor.Peer do
           id: integer(),
           is_disconnected: boolean(),
           nickname: String.t(),
-          roles: [String.t()]
+          roles: [atom()]
         }
 end

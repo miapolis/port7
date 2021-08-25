@@ -11,12 +11,12 @@ export const useManagePeerStore = create<PeerState>((set) => ({
   peer: undefined,
   setPeer: (peer: ManagedPeer) => {
     set((_state) => ({
-      peer: peer
-    }))
+      peer: peer,
+    }));
   },
   clear: () => {
     set((_state) => ({
       peer: undefined,
-    }))
-  }
+    }));
+  },
 }));

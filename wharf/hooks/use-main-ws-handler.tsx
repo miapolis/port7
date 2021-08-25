@@ -17,7 +17,7 @@ export const useMainWsHandler = () => {
       ///// - PEER FUNCTIONS - ////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
       conn.addListener("peer_join", ({ data }: any) => {
-        useRoomStore.getState().addPeer(data.id, data.nickname);
+        useRoomStore.getState().addPeer(data.id, data.nickname, data.roles);
         useRoomChatStore
           .getState()
           .addMessage(createSystemMessage(`${data.nickname} joined`));
@@ -30,6 +30,20 @@ export const useMainWsHandler = () => {
         useRoomStore.getState().disconnectPeer(data.id);
       }),
       conn.addListener("remove_peer", ({ data }: any) => {
+        const peer = useRoomStore.getState().peers.get(data.id);
+        // Peer is to be immediately removed, a message in chat is needed
+        if (peer && !peer.isDisconnected) {
+          let ending = "left";
+          switch (data.action) {
+            case "kick":
+              ending = "was kicked";
+              break;
+          }
+
+          useRoomChatStore
+            .getState()
+            .addMessage(createSystemMessage(`${peer.nickname} ${ending}`));
+        }
         useRoomStore.getState().removePeer(data.id);
       }),
       /////////////////////////////////////////////////////////////////////////

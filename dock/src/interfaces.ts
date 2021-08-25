@@ -21,6 +21,7 @@ export type Peer = {
   id: number;
   nickname: string;
   isDisconnected: boolean;
+  roles: Role[];
 }
 
 export type ManagedPeer = {

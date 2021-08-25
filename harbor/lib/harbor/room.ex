@@ -57,7 +57,7 @@ defmodule Harbor.Room do
         Anchorage.PubSub.subscribe("chat:" <> room_id)
 
         Map.replace!(room.peers, user_id, new_peer)
-        %{room: room, peer_id: peer.id}
+        %{room: room, peer: new_peer}
       else
         %{error: "already connected"}
       end
@@ -71,7 +71,7 @@ defmodule Harbor.Room do
 
           roles =
             if Enum.count(room.peers) == 0 do
-              ["leader"]
+              [:leader]
             else
               []
             end
@@ -87,7 +87,7 @@ defmodule Harbor.Room do
 
           Anchorage.PubSub.subscribe("chat:" <> room_id)
 
-          %{room: room, peer_id: peer_id}
+          %{room: room, peer: peer}
       end
     end
   end
@@ -144,8 +144,46 @@ defmodule Harbor.Room do
     end
   end
 
-  def remove_user(current_room_id, user_id) do
-    Anchorage.RoomSession.remove_from_room(current_room_id, user_id)
+  def kick_user(current_room_id, kicker_user_id, peer_id, reason \\ "") do
+    peers = Anchorage.RoomSession.get_state(current_room_id).peers
+    user_id = peer_id_to_user_id(peer_id, peers)
+
+    # TODO: fix this nested if/else hell
+    if not is_nil(user_id) do
+      kicker = Map.fetch!(peers, kicker_user_id)
+
+      if kicker.id != peer_id do
+        if Harbor.Permissions.can_manage_members?(kicker.roles) do
+          case Anchorage.UserSession.lookup(user_id) do
+            [{_, _}] ->
+              ws_pid = Anchorage.UserSession.get(user_id, :pid)
+
+              Pier.SocketHandler.unsub(ws_pid, "chat:" <> current_room_id)
+
+              Pier.SocketHandler.remote_send(ws_pid, %{
+                op: "kicked",
+                d: %{type: "kick", reason: reason}
+              })
+
+              Anchorage.UserSession.set_state(user_id, %{current_room_id: nil})
+              Pier.SocketHandler.clear_current_room(ws_pid)
+          end
+
+          remove_user(current_room_id, user_id, :kick)
+          :ok
+        else
+          {:error, "cannot kick self"}
+        end
+      else
+        {:error, "missing permissions"}
+      end
+    else
+      {:error, "peer does not exist"}
+    end
+  end
+
+  def remove_user(current_room_id, user_id, action \\ :default) do
+    Anchorage.RoomSession.remove_from_room(current_room_id, user_id, action)
   end
 
   def gen_peer_id(room_state) do
@@ -157,6 +195,17 @@ defmodule Harbor.Room do
         {:halt, x}
       else
         {:cont, acc}
+      end
+    end)
+  end
+
+  @spec peer_id_to_user_id(integer(), any()) :: String.t() | nil
+  def peer_id_to_user_id(peer_id, peers) do
+    Enum.reduce_while(peers, nil, fn {uid, peer}, _acc ->
+      if peer.id == peer_id do
+        {:halt, uid}
+      else
+        {:cont, nil}
       end
     end)
   end

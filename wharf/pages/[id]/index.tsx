@@ -10,6 +10,7 @@ import { Header } from "@port7/modules/room/header";
 import { MainLayout } from "@port7/modules/room/main-layout";
 import { ChatPanel } from "@port7/modules/room/chat-panel";
 import { ManagePeerModal } from "@port7/modules/room/manage-peer-modal";
+import { usePeerModalStore } from "@port7/modules/room/use-peer-modal-store";
 
 interface RoomPageProps {
   room?: Room;
@@ -18,8 +19,7 @@ interface RoomPageProps {
 const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const conn = useConn();
   const roomStore = useRoomStore();
-
-  const [managePeerModalOpen, setManagePeerModalOpen] = React.useState(false);
+  const peerModalStore = usePeerModalStore();
 
   React.useEffect(() => {
     roomStore.setRoom(room);
@@ -39,8 +39,8 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
                   <ChatPanel />
                 </div>
                 <ManagePeerModal
-                  open={managePeerModalOpen}
-                  onClose={() => setManagePeerModalOpen(false)}
+                  open={peerModalStore.open}
+                  onClose={() => peerModalStore.setOpen(false)}
                 />
               </div>
             </RoomEnter>

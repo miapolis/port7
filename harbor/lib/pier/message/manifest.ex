@@ -11,6 +11,7 @@ defmodule Pier.Message.Manifest do
     "room:create" => Room.Create,
     "room:join" => Room.Join,
     "room:get_profiles" => Room.GetProfiles,
+    "room:kick" => Room.Kick,
     "chat:send_msg" => Chat.Send,
     "foo:bar" => Misc.Bar,
     "auth:request" => Auth.Request

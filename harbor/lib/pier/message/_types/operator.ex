@@ -11,6 +11,7 @@ defenum(
     {Room.Create, 1},
     {Room.Join, 2},
     {Room.GetProfiles, 3},
+    {Room.Kick, 4},
     {Chat.Send, 10},
     {Misc.Bar, 40},
     {Auth.Request, 73}
