@@ -11,6 +11,7 @@ interface RoomState {
   setMyPeerId: (id: number) => void;
   setPeers: (peer: Peer[]) => void;
   addPeer: (id: number, nickname: string, roles: Role[]) => void;
+  updatePeer: (peer: Peer) => void;
   disconnectPeer: (id: number) => void;
   removePeer: (id: number) => void;
 }
@@ -49,6 +50,14 @@ export const useRoomStore = create<RoomState>((set) => ({
         roles: roles,
       }),
     }));
+  },
+  updatePeer: (peer: Peer) => {
+    set((state) => {
+      state.peers.set(peer.id, peer);
+      return {
+        peers: state.peers,
+      };
+    });
   },
   disconnectPeer: (id: number) => {
     set((state) => {

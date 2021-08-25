@@ -2,6 +2,8 @@ defmodule Pier.Message.Auth.Request do
   use Pier.Message.Call
   import Ecto.Changeset
 
+  require Logger
+
   @primary_key false
   embedded_schema do
     field(:nickname, :string)
@@ -28,11 +30,11 @@ defmodule Pier.Message.Auth.Request do
     with {:ok, request} <- apply_action(changeset, :validate) do
       case Harbor.Auth.authenticate(request, state.ip) do
         {:ok, user} ->
-          IO.puts("AUTH" <> inspect(user))
+          Logger.debug("AUTH " <> inspect user)
           {:reply, %{}, %{state | user: user}}
 
         {:error, reason} ->
-          IO.puts(reason)
+          Logger.debug("Auth failed: " <> reason)
           {:reply, %{error: reason}, state}
       end
     else

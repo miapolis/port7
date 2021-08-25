@@ -115,8 +115,6 @@ defmodule Anchorage.UserSession do
   end
 
   defp handle_disconnect(pid, :normal, state = %{ip: _ip, pid: pid}) do
-    IO.puts("Ending for normal reasons")
-
     if state.current_room_id do
       Harbor.Room.disconnect_from_room(state.current_room_id, state.user_id)
 

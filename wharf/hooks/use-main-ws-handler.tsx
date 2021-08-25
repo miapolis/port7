@@ -46,6 +46,20 @@ export const useMainWsHandler = () => {
         }
         useRoomStore.getState().removePeer(data.id);
       }),
+      conn.addListener("new_leader", ({ data }: any) => {
+        let peer = useRoomStore.getState().peers.get(data.id);
+        if (!peer) return;
+
+        peer.roles = data.roles;
+        useRoomStore.getState().updatePeer(peer);
+
+        let message = `${peer.nickname} is now leader`;
+        if (peer.id === useRoomStore.getState().myPeerId) {
+          message = "You are now leader";
+        }
+
+        useRoomChatStore.getState().addMessage(createSystemMessage(message));
+      }),
       /////////////////////////////////////////////////////////////////////////
       ///// - CHAT FUNCTIONS - ////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

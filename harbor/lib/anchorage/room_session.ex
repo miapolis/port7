@@ -146,6 +146,24 @@ defmodule Anchorage.RoomSession do
       d: %{id: peer.id, action: action}
     })
 
+    # The member that is being removed is the leader
+    peers =
+      if Enum.member?(peer.roles, :leader) do
+        # TODO: handle priority better so that mods are prioritized to be promoted
+        # over just random users
+        {uid, new_leader} = Enum.random(peers)
+        new_roles = [:leader | new_leader.roles]
+
+        ws_fan(peers, %{
+          op: "new_leader",
+          d: %{id: new_leader.id, roles: new_roles}
+        })
+
+        Map.replace(peers, uid, %{new_leader | roles: new_roles})
+      else
+        peers
+      end
+
     {:noreply, %{state | peers: peers}}
   end
 
@@ -159,5 +177,6 @@ defmodule Anchorage.RoomSession do
   def handle_cast({:disconnect_from_room, user_id}, state),
     do: disconnect_from_room_impl(user_id, state)
 
-  def handle_cast({:remove_from_room, user_id, action}, state), do: remove_from_room_impl(user_id, action, state)
+  def handle_cast({:remove_from_room, user_id, action}, state),
+    do: remove_from_room_impl(user_id, action, state)
 end
