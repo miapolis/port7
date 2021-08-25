@@ -27,3 +27,4 @@ harbor-*.tar
 
 .elixir_ls
 _build
+.env

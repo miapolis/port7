@@ -4,6 +4,7 @@ defmodule Pier do
 
   alias Pier.Routes.Room
 
+  use Sentry.PlugCapture
   plug(:match)
   plug(:dispatch)
 

@@ -30,7 +30,7 @@ defmodule Pier.Message.Auth.Request do
     with {:ok, request} <- apply_action(changeset, :validate) do
       case Harbor.Auth.authenticate(request, state.ip) do
         {:ok, user} ->
-          Logger.debug("AUTH " <> inspect user)
+          Logger.debug("AUTH " <> inspect(user))
           {:reply, %{}, %{state | user: user}}
 
         {:error, reason} ->

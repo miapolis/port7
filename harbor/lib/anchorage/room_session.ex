@@ -148,7 +148,7 @@ defmodule Anchorage.RoomSession do
 
     # The member that is being removed is the leader
     peers =
-      if Enum.member?(peer.roles, :leader) do
+      if Enum.member?(peer.roles, :leader) && length(peers) > 0 do
         # TODO: handle priority better so that mods are prioritized to be promoted
         # over just random users
         {uid, new_leader} = Enum.random(peers)
