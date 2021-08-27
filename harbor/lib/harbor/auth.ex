@@ -27,7 +27,8 @@ defmodule Harbor.Auth do
         user_id: user_id,
         nickname: nickname,
         ip: ip,
-        current_room_id: current_room_id
+        current_room_id: current_room_id,
+        peer_id: nil
       }
 
       # Ensure that a nickname change is made even if a session already exists

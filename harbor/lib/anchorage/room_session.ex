@@ -31,7 +31,8 @@ defmodule Anchorage.RoomSession do
             room_code: String.t(),
             is_private: String.t(),
             peers: %{String.t() => Harbor.Peer.t()},
-            game: atom()
+            game: atom(),
+            inner_game: Quay.BaseGame
           }
 
     defstruct room_id: "",
@@ -39,7 +40,8 @@ defmodule Anchorage.RoomSession do
               room_code: "",
               is_private: false,
               peers: %{},
-              game: :none
+              game: :none,
+              inner_game: nil
   end
 
   defp via(user_id), do: {:via, Registry, {Anchorage.RoomSessionRegistry, user_id}}
@@ -67,8 +69,12 @@ defmodule Anchorage.RoomSession do
   end
 
   def init(init) do
+    IO.puts("CREATING ROOM WITH INIT " <> inspect(init))
+
     Anchorage.Chat.start_link_supervised(init)
-    {:ok, struct(State, init)}
+    Ports.Rumble.Game.start_link_supervised(init)
+
+    {:ok, struct(State, Keyword.merge(init, inner_game: Ports.Rumble.Game))}
   end
 
   def ws_fan(peers, msg) do
@@ -110,6 +116,8 @@ defmodule Anchorage.RoomSession do
       end
     end
 
+    state.inner_game.peer_join(state.room_id, user_id, peer)
+
     {:noreply,
      %{
        state
@@ -148,7 +156,7 @@ defmodule Anchorage.RoomSession do
 
     # The member that is being removed is the leader
     peers =
-      if Enum.member?(peer.roles, :leader) && length(peers) > 0 do
+      if Enum.member?(peer.roles, :leader) && Enum.count(peers) > 0 do
         # TODO: handle priority better so that mods are prioritized to be promoted
         # over just random users
         {uid, new_leader} = Enum.random(peers)
@@ -167,6 +175,13 @@ defmodule Anchorage.RoomSession do
     {:noreply, %{state | peers: peers}}
   end
 
+  def broadcast_ws(room_id, msg), do: cast(room_id, {:broadcast_ws, msg})
+
+  defp broadcast_ws_impl(msg, state) do
+    ws_fan(state.peers, msg)
+    {:noreply, state}
+  end
+
   ### - ROUTER - ######################################################################
 
   def handle_call({:get_state}, _reply, state), do: get_state_impl(state)
@@ -179,4 +194,6 @@ defmodule Anchorage.RoomSession do
 
   def handle_cast({:remove_from_room, user_id, action}, state),
     do: remove_from_room_impl(user_id, action, state)
+
+  def handle_cast({:broadcast_ws, msg}, state), do: broadcast_ws_impl(msg, state)
 end

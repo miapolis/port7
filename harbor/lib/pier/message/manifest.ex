@@ -4,6 +4,8 @@ defmodule Pier.Message.Manifest do
   alias Pier.Message.Misc
   alias Pier.Message.Auth
 
+  alias Ports.Rumble
+
   alias Pier.Message.Types.Operator
   require Operator
 
@@ -14,7 +16,10 @@ defmodule Pier.Message.Manifest do
     "room:kick" => Room.Kick,
     "chat:send_msg" => Chat.Send,
     "foo:bar" => Misc.Bar,
-    "auth:request" => Auth.Request
+    "auth:request" => Auth.Request,
+    # RUMBLE
+    "rumble:join_round" => Rumble.Message.JoinRound,
+    "rumble:leave_round" => Rumble.Message.LeaveRound
   }
 
   @actions

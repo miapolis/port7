@@ -36,7 +36,7 @@ defmodule Pier.Message.Room.Join do
           {:error, error, state}
 
         %{room: room, peer: peer} ->
-          user = %{state.user | current_room_id: room.room_id}
+          user = %{state.user | current_room_id: room.room_id, peer_id: peer.id}
           peers = Map.values(room.peers)
 
           {:reply,

@@ -1,17 +1,20 @@
 defmodule Harbor do
   use Application
 
+  require Logger
+
   @games ["rumble"]
   def games(), do: @games
 
   @impl true
   def start(_type, _args) do
-    IO.puts("Starting port7...")
+    Logger.info("Starting port7...")
 
     children = [
       Anchorage.Supervisors.UserSession,
       Anchorage.Supervisors.RoomSession,
       Anchorage.Supervisors.Chat,
+      Anchorage.Supervisors.Game,
       Anchorage.RoomCode,
       {Phoenix.PubSub, name: Anchorage.PubSub},
       Plug.Cowboy.child_spec(

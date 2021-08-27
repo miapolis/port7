@@ -11,6 +11,7 @@ defmodule Anchorage.UserSession do
             is_disconnected: boolean(),
             nickname: String.t(),
             current_room_id: String.t(),
+            peer_id: integer(),
             ip: String.t(),
             pid: pid(),
             idle_timer_ref: any()
@@ -20,6 +21,7 @@ defmodule Anchorage.UserSession do
               is_disconnected: false,
               nickname: nil,
               current_room_id: nil,
+              peer_id: nil,
               ip: nil,
               pid: nil,
               idle_timer_ref: nil
