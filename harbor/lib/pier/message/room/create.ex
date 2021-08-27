@@ -15,7 +15,7 @@ defmodule Pier.Message.Room.Create do
     |> cast(data, [:name, :isPrivate, :game])
     |> validate_required([:name, :isPrivate, :game])
     |> validate_length(:name, min: 2, max: 40)
-    |> validate_inclusion(:game, Harbor.games())
+    |> validate_inclusion(:game, Enum.map(Harbor.games(), &(to_string(&1))))
   end
 
   def execute(changeset, state) do

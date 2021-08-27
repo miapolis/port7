@@ -3,7 +3,7 @@ defmodule Harbor do
 
   require Logger
 
-  @games ["rumble"]
+  @games [:rumble]
   def games(), do: @games
 
   @impl true
