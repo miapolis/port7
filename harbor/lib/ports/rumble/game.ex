@@ -127,28 +127,57 @@ defmodule Ports.Rumble.Game do
   end
 
   defp peer_join_impl(user_id, peer, state) do
-    new_peer = %Peer{
-      id: peer.id,
-      nickname: peer.nickname,
-      is_disconnected: peer.is_disconnected,
-      is_joined: false
-    }
+    case Map.fetch(state.peers, peer.id) do
+      {:ok, fetched} ->
+        if fetched.is_disconnected do
+          peers = Map.replace!(state.peers, peer.id, %{fetched | is_disconnected: false})
 
-    peers = Map.put(state.peers, peer.id, new_peer)
+          Anchorage.UserSession.send_ws(user_id, nil, %{
+            op: "landing",
+            d: %{
+              milestone: state.milestone,
+              peers: Map.values(peers)
+            }
+          })
 
-    Anchorage.UserSession.send_ws(user_id, nil, %{
-      op: "landing",
-      d: %{
-        milestone: state.milestone,
-        peers: Map.values(peers)
-      }
-    })
+          {:noreply, %{state | peers: peers}}
+        else
+          {:noreply, state}
+        end
 
-    {:noreply, %{state | peers: peers}}
+      :error ->
+        new_peer = %Peer{
+          id: peer.id,
+          nickname: peer.nickname,
+          is_disconnected: peer.is_disconnected,
+          is_joined: false
+        }
+
+        peers = Map.put(state.peers, peer.id, new_peer)
+
+        Anchorage.UserSession.send_ws(user_id, nil, %{
+          op: "landing",
+          d: %{
+            milestone: state.milestone,
+            peers: Map.values(peers)
+          }
+        })
+
+        {:noreply, %{state | peers: peers}}
+    end
   end
 
   @impl true
-  def peer_leave(_room_id, _peer) do
+  def peer_leave(room_id, peer) do
+    cast(room_id, {:peer_leave, peer})
+  end
+
+  defp peer_leave_impl(peer, state) do
+    peer = Map.fetch!(state.peers, peer.id)
+
+    updated = %{peer | is_disconnected: true}
+    new_peers = Map.replace!(state.peers, peer.id, updated)
+    {:noreply, %{state | peers: new_peers}}
   end
 
   @impl true
@@ -157,6 +186,7 @@ defmodule Ports.Rumble.Game do
 
   @impl true
   def handle_cast({:peer_join, user_id, peer}, state), do: peer_join_impl(user_id, peer, state)
+  def handle_cast({:peer_leave, peer}, state), do: peer_leave_impl(peer, state)
 
   ### - ROUTER - ######################################################################
 

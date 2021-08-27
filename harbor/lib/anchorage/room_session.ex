@@ -136,6 +136,8 @@ defmodule Anchorage.RoomSession do
       d: %{id: peer.id}
     })
 
+    state.inner_game.peer_leave(state.room_id, peer)
+
     {:noreply, %{state | peers: peers}}
   end
 
