@@ -72,9 +72,21 @@ defmodule Anchorage.RoomSession do
     IO.puts("CREATING ROOM WITH INIT " <> inspect(init))
 
     Anchorage.Chat.start_link_supervised(init)
-    Ports.Rumble.Game.start_link_supervised(init)
 
-    {:ok, struct(State, Keyword.merge(init, inner_game: Ports.Rumble.Game))}
+    module = get_game_module(init)
+    module.start_link_supervised(init)
+
+    {:ok, struct(State, Keyword.merge(init, inner_game: module))}
+  end
+
+  defp get_game_module(init) do
+    case init[:game] do
+      :rumble ->
+        Ports.Rumble.Game
+
+      _ ->
+        raise "invalid game"
+    end
   end
 
   def ws_fan(peers, msg) do
@@ -173,6 +185,8 @@ defmodule Anchorage.RoomSession do
       else
         peers
       end
+
+    state.inner_game.peer_remove(state.room_id, peer)
 
     {:noreply, %{state | peers: peers}}
   end

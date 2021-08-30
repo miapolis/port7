@@ -119,6 +119,17 @@ defmodule Ports.Rumble.Game do
 
   defp leave_round_impl(_peer_id, state), do: {:noreply, state}
 
+  defp handle_remove_peer(peer, state) do
+    if state.milestone == :lobby do
+      Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+        op: "game_remove_peer",
+        d: %{
+          id: peer.id
+        }
+      })
+    end
+  end
+
   ### - BEHAVIOUR - ###################################################################
 
   @impl true
@@ -181,12 +192,20 @@ defmodule Ports.Rumble.Game do
   end
 
   @impl true
-  def peer_remove(_room_id, _peer) do
+  def peer_remove(room_id, peer) do
+    cast(room_id, {:peer_remove, peer})
+  end
+
+  defp peer_remove_impl(peer, state) do
+    peers = Map.delete(state.peers, peer.id)
+    handle_remove_peer(peer, state)
+    {:noreply, %{state | peers: peers}}
   end
 
   @impl true
   def handle_cast({:peer_join, user_id, peer}, state), do: peer_join_impl(user_id, peer, state)
   def handle_cast({:peer_leave, peer}, state), do: peer_leave_impl(peer, state)
+  def handle_cast({:peer_remove, peer}, state), do: peer_remove_impl(peer, state)
 
   ### - ROUTER - ######################################################################
 

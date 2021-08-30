@@ -18,7 +18,7 @@ export const WaitForWsAndAuth: React.FC = ({ children }) => {
   );
 
   React.useEffect(() => {
-    setTimeout(() => setWaiting(false), 500);
+    setTimeout(() => setWaiting(false), 100);
   }, []);
 
   React.useEffect(() => {

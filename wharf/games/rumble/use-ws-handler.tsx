@@ -19,6 +19,9 @@ export const useWsHandler = () => {
 
         useRumbleStore.getState().doLanding();
       }),
+      conn.addListener("game_remove_peer", ({ data }: any) => {
+        useRumbleStore.getState().removeJoinedPeer(data.id);
+      }),
       conn.addListener("peer_joined_round", ({ data }: any) => {
         useRumbleStore.getState().addJoinedPeer(data.id, data.nickname);
       }),
