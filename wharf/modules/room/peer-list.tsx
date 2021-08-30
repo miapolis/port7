@@ -19,9 +19,16 @@ export const PeerList: React.FC = () => {
 
   return (
     <div>
-      {profileStore.profiles.map((p) => (
-        <PeerItem peer={p} isMe={p.id === room.myPeerId} key={p.id} />
-      ))}
+      {profileStore.profiles
+        .sort((one, two) => {
+          if (one.roles.includes("leader") && !two.roles.includes("leader")) return -1;
+          if (one.id < two.id) return -1;
+          if (one.id > two.id) return 1;
+          return 0;
+        })
+        .map((p) => (
+          <PeerItem peer={p} isMe={p.id === room.myPeerId} key={p.id} />
+        ))}
     </div>
   );
 };
