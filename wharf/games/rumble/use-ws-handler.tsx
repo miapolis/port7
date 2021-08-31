@@ -17,6 +17,11 @@ export const useWsHandler = () => {
             data.peers.filter((x: any) => x.isJoined === true) || []
           );
 
+        useRumbleStore.getState().setServerNow(data.milestone.serverNow);
+        if (data.milestone.startTime) {
+          useRumbleStore.getState().setStartTimestamp(data.milestone.startTime);
+        }
+
         useRumbleStore.getState().doLanding();
       }),
       conn.addListener("game_remove_peer", ({ data }: any) => {
@@ -27,6 +32,13 @@ export const useWsHandler = () => {
       }),
       conn.addListener("peer_left_round", ({ data }: any) => {
         useRumbleStore.getState().removeJoinedPeer(data.id);
+      }),
+      conn.addListener("round_starting", ({ data }: any) => {
+        useRumbleStore.getState().setServerNow(data.now);
+        useRumbleStore.getState().setStartTimestamp(data.in);
+      }),
+      conn.addListener("cancel_start_round", ({}: any) => {
+        useRumbleStore.getState().setStartTimestamp(undefined);
       }),
     ];
 

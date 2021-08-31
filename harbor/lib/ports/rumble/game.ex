@@ -4,19 +4,24 @@ defmodule Ports.Rumble.Game do
   use GenServer, restart: :temporary
   require Logger
 
+  alias Quay.Utils
   alias Ports.Rumble.Peer
+  alias Ports.Rumble.Milestone
 
   @behaviour BaseGame
 
   defmodule State do
     @type t :: %__MODULE__{
             room_id: String.t(),
-            peers: %{integer() => any()},
-            milestone: atom()
+            peers: %{integer() => Peer.t()},
+            milestone: Milestone.t()
           }
 
-    defstruct room_id: nil, peers: %{}, milestone: nil
+    defstruct room_id: nil, peers: %{}, milestone: nil, start_timer: nil
   end
+
+  @start_game_timeout 15000
+  @min_players_for_game 2
 
   defp via(room_id), do: {:via, Registry, {Anchorage.GameRegistry, room_id}}
 
@@ -51,7 +56,17 @@ defmodule Ports.Rumble.Game do
 
   @impl true
   def init(init) do
-    {:ok, struct(State, Keyword.merge(init, milestone: :lobby))}
+    {:ok,
+     struct(
+       State,
+       Keyword.merge(init,
+         milestone: %Milestone{
+           name: :lobby,
+           start_time: nil,
+           start_timer: nil
+         }
+       )
+     )}
   end
 
   ### - API - #########################################################################
@@ -60,7 +75,7 @@ defmodule Ports.Rumble.Game do
     cast(room_id, {:join_round, peer_id})
   end
 
-  defp join_round_impl(peer_id, %{milestone: :lobby} = state) do
+  defp join_round_impl(peer_id, %{milestone: %{name: :lobby}} = state) do
     new_state =
       case Map.fetch(state.peers, peer_id) do
         {:ok, peer} ->
@@ -74,7 +89,13 @@ defmodule Ports.Rumble.Game do
             })
 
             peers = Map.replace!(state.peers, peer_id, %{peer | is_joined: true})
-            %{state | peers: peers}
+            {start_time, timer} = begin_start_timer(state)
+
+            %{
+              state
+              | peers: peers,
+                milestone: %{state.milestone | start_time: start_time, start_timer: timer}
+            }
           else
             state
           end
@@ -88,11 +109,36 @@ defmodule Ports.Rumble.Game do
 
   defp join_round_impl(_peer_id, state), do: {:noreply, state}
 
+  defp begin_start_timer(state) do
+    now = Utils.Time.ms_now()
+    then = now + @start_game_timeout
+
+    Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+      op: "round_starting",
+      d: %{
+        in: then,
+        now: now
+      }
+    })
+
+    ref = Process.send_after(self(), {:start_game}, @start_game_timeout)
+    {then, ref}
+  end
+
+  defp cancel_start_timer(state) do
+    Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+      op: "cancel_start_round",
+      d: %{}
+    })
+
+    Process.cancel_timer(state.milestone.start_timer)
+  end
+
   def leave_round(room_id, peer_id) do
     cast(room_id, {:leave_round, peer_id})
   end
 
-  defp leave_round_impl(peer_id, %{milestone: :lobby} = state) do
+  defp leave_round_impl(peer_id, %{milestone: %{name: :lobby}} = state) do
     new_state =
       case Map.fetch(state.peers, peer_id) do
         {:ok, peer} ->
@@ -105,7 +151,22 @@ defmodule Ports.Rumble.Game do
             })
 
             peers = Map.replace!(state.peers, peer_id, %{peer | is_joined: false})
-            %{state | peers: peers}
+
+            peers_left =
+              peers
+              |> Map.values()
+              |> Enum.filter(&(&1.is_joined == true))
+              |> Enum.count()
+
+            start_timer =
+              if peers_left < @min_players_for_game do
+                cancel_start_timer(state)
+                nil
+              else
+                state.start_time
+              end
+
+            %{state | peers: peers, start_timer: start_timer}
           else
             state
           end
@@ -143,13 +204,7 @@ defmodule Ports.Rumble.Game do
         if fetched.is_disconnected do
           peers = Map.replace!(state.peers, peer.id, %{fetched | is_disconnected: false})
 
-          Anchorage.UserSession.send_ws(user_id, nil, %{
-            op: "landing",
-            d: %{
-              milestone: state.milestone,
-              peers: Map.values(peers)
-            }
-          })
+          send_landing(user_id, peers, state)
 
           {:noreply, %{state | peers: peers}}
         else
@@ -166,16 +221,20 @@ defmodule Ports.Rumble.Game do
 
         peers = Map.put(state.peers, peer.id, new_peer)
 
-        Anchorage.UserSession.send_ws(user_id, nil, %{
-          op: "landing",
-          d: %{
-            milestone: state.milestone,
-            peers: Map.values(peers)
-          }
-        })
+        send_landing(user_id, peers, state)
 
         {:noreply, %{state | peers: peers}}
     end
+  end
+
+  defp send_landing(user_id, peers, state) do
+    Anchorage.UserSession.send_ws(user_id, nil, %{
+      op: "landing",
+      d: %{
+        peers: Map.values(peers),
+        milestone: Map.merge(state.milestone, %{serverNow: Utils.Time.ms_now()})
+      }
+    })
   end
 
   @impl true

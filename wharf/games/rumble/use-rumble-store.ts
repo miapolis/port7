@@ -4,7 +4,11 @@ import { Peer } from "@port7/dock/lib/games/rumble";
 interface RumbleState {
   landed: boolean;
   joinedPeers: Map<number, Peer>;
+  serverToLocalNow: number | undefined;
+  startTimestamp: number | undefined;
   doLanding: () => void;
+  setServerNow: (serverNow: number) => void;
+  setStartTimestamp: (timestamp: number | undefined) => void;
   setJoinedPeers: (peers: Peer[]) => void;
   addJoinedPeer: (id: number, nickname: string) => void;
   removeJoinedPeer: (id: number) => void;
@@ -13,9 +17,21 @@ interface RumbleState {
 export const useRumbleStore = create<RumbleState>((set) => ({
   landed: false,
   joinedPeers: new Map<number, Peer>(),
+  serverToLocalNow: undefined,
+  startTimestamp: undefined,
   doLanding: () => {
     set((_state) => ({
       landed: true,
+    }));
+  },
+  setServerNow: (serverNow: number) => {
+    set((_state) => ({
+      serverToLocalNow: Date.now() - serverNow,
+    }));
+  },
+  setStartTimestamp: (timestamp: number | undefined) => {
+    set((_state) => ({
+      startTimestamp: timestamp,
     }));
   },
   setJoinedPeers: (peers: Peer[]) => {
