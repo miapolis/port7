@@ -28,6 +28,7 @@ defmodule Harbor.MixProject do
       {:ecto_enum, "~> 1.4"},
       {:elixir_uuid, "~> 1.2"},
       {:expletive, "~> 0.1.0"},
+      {:fsmx, "~> 0.2.0"},
       {:sentry, "~> 8.0"},
       {:hackney, "~> 1.8"}
     ]
