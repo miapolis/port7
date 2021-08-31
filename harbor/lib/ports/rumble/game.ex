@@ -89,13 +89,20 @@ defmodule Ports.Rumble.Game do
             })
 
             peers = Map.replace!(state.peers, peer_id, %{peer | is_joined: true})
-            {start_time, timer} = begin_start_timer(state)
 
-            %{
-              state
-              | peers: peers,
-                milestone: %{state.milestone | start_time: start_time, start_timer: timer}
-            }
+            # Only start if there are enough joined peers and there isn't already a timer
+            if count_joined_peers(peers) >= @min_players_for_game and
+                 is_nil(state.milestone.start_timer) do
+              {start_time, timer} = begin_start_timer(state)
+
+              %{
+                state
+                | peers: peers,
+                  milestone: %{state.milestone | start_time: start_time, start_timer: timer}
+              }
+            else
+              %{state | peers: peers}
+            end
           else
             state
           end
@@ -134,6 +141,10 @@ defmodule Ports.Rumble.Game do
     Process.cancel_timer(state.milestone.start_timer)
   end
 
+  def start_game(state) do
+    IO.puts("STARTING GAME " <> inspect(state, pretty: true))
+  end
+
   def leave_round(room_id, peer_id) do
     cast(room_id, {:leave_round, peer_id})
   end
@@ -152,18 +163,14 @@ defmodule Ports.Rumble.Game do
 
             peers = Map.replace!(state.peers, peer_id, %{peer | is_joined: false})
 
-            peers_left =
-              peers
-              |> Map.values()
-              |> Enum.filter(&(&1.is_joined == true))
-              |> Enum.count()
+            peers_left = count_joined_peers(peers)
 
             start_timer =
               if peers_left < @min_players_for_game do
                 cancel_start_timer(state)
                 nil
               else
-                state.start_time
+                state.milestone.start_timer
               end
 
             %{state | peers: peers, start_timer: start_timer}
@@ -189,6 +196,13 @@ defmodule Ports.Rumble.Game do
         }
       })
     end
+  end
+
+  defp count_joined_peers(peers) do
+    peers
+    |> Map.values()
+    |> Enum.filter(&(&1.is_joined == true))
+    |> Enum.count()
   end
 
   ### - BEHAVIOUR - ###################################################################
@@ -270,4 +284,16 @@ defmodule Ports.Rumble.Game do
 
   def handle_cast({:join_round, peer_id}, state), do: join_round_impl(peer_id, state)
   def handle_cast({:leave_round, peer_id}, state), do: leave_round_impl(peer_id, state)
+
+  @impl true
+  def handle_info({:start_game}, %{milestone: %{name: :lobby, start_timer: start_timer}} = state) do
+    if not is_nil(start_timer) do
+      start_game(state)
+      {:noreply, %{state | milestone: %{start_timer: nil, start_time: nil}}}
+    else
+      {:noreply, state}
+    end
+  end
+
+  def handle_info({:start_game}, state), do: {:noreply, state}
 end
