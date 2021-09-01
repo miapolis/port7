@@ -209,19 +209,18 @@ defmodule Ports.Rumble.Game do
     end
   end
 
-  defp next_turn(%{milestone: %{current_turn: nil}} = state) do
+  def next_turn(%{milestone: %{current_turn: nil}} = state) do
     peers = sorted_joined_peers(state.peers)
     Enum.fetch!(peers, 0).id
   end
 
-  # TODO: Tests! We need tests!
-  defp next_turn(state) do
+  def next_turn(state) do
     current = Map.fetch!(state.peers, state.milestone.current_turn)
     peers = sorted_joined_peers(state.peers)
     index = Enum.find_index(peers, fn elem -> elem.id == current.id end)
 
     next =
-      if index > Enum.count(peers) do
+      unless index + 1 >= Enum.count(peers) do
         index + 1
       else
         0

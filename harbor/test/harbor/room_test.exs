@@ -1,4 +1,4 @@
-defmodule AnchorageTest.Room do
+defmodule HarborTest.Room do
   use ExUnit.Case
 
   alias Harbor.Room

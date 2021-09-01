@@ -7,7 +7,8 @@ defmodule Harbor.MixProject do
       version: "0.1.0",
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -30,7 +31,13 @@ defmodule Harbor.MixProject do
       {:expletive, "~> 0.1.0"},
       {:fsmx, "~> 0.2.0"},
       {:sentry, "~> 8.0"},
-      {:hackney, "~> 1.8"}
+      {:hackney, "~> 1.8"},
+      # TEST HELPERS
+      {:faker, "~> 0.16.0", only: :test},
+      {:websockex, "~> 0.4.3", only: :test}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/_support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
