@@ -64,13 +64,13 @@ defmodule PierTest.WsClient do
         from = unquote(from)
 
         ExUnit.Assertions.assert_receive(
-          {:text, %{"op" => unquote(op), "p" => unquote(payload)}, ^from}
+          {:text, %{"op" => unquote(op), "d" => unquote(payload)}, ^from}
         )
       end
     else
       quote do
         ExUnit.Assertions.assert_receive(
-          {:text, %{"op" => unquote(op), "p" => unquote(payload)}, _}
+          {:text, %{"op" => unquote(op), "d" => unquote(payload)}, _}
         )
       end
     end

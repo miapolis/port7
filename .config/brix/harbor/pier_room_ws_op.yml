@@ -1,0 +1,4 @@
+commands:
+- template:
+    source: pier_room_ws_op.exs.hbs
+    destination: harbor/test/pier/room/{{module}}_test.exs

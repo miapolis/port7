@@ -1,6 +1,8 @@
 defmodule Anchorage.RoomSession do
   use GenServer, restart: :temporary
 
+  require Logger
+
   defmodule State do
     defimpl Jason.Encoder, for: State do
       def encode(value, opts) do
@@ -69,7 +71,7 @@ defmodule Anchorage.RoomSession do
   end
 
   def init(init) do
-    IO.puts("CREATING ROOM WITH INIT " <> inspect(init))
+    Logger.debug("CREATING ROOM WITH INIT " <> inspect(init))
 
     Anchorage.Chat.start_link_supervised(init)
 
