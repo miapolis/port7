@@ -23,15 +23,15 @@ defmodule PierTest.Room.KickTest do
           "game" => "rumble"
         })
 
-        WsClient.do_call(t.client_ws, "room:join", %{"roomId" => room_id})
+      WsClient.do_call(t.client_ws, "room:join", %{"roomId" => room_id})
 
-        other_ws = WsClientFactory.create_client_for(Factory.user_token())
+      other_ws = WsClientFactory.create_client_for(Factory.user_token())
 
-        %{"myPeerId" => toKickId} = WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
+      %{"myPeerId" => toKickId} = WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
 
-        WsClient.send_msg(t.client_ws, "room:kick", %{"id" => toKickId})
+      WsClient.send_msg(t.client_ws, "room:kick", %{"id" => toKickId})
 
-        WsClient.assert_frame("kicked", %{"type" => "kick"}, other_ws)
+      WsClient.assert_frame("kicked", %{"type" => "kick"}, other_ws)
     end
   end
 end
