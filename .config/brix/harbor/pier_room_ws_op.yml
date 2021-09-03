@@ -1,5 +1,8 @@
 commands:
 - template:
-    source: pier_room_ws_op.exs.hbs
+    source: ./templates/tests/room_ws_op.exs.hbs
     destination: harbor/test/pier/room/{{module}}_test.exs
     overwrite: true
+    context:
+      outer_mod: room
+      def_mod: PierTest.Room

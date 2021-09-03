@@ -1,0 +1,10 @@
+context:
+  dest: harbor/test/ports/{{project}}/message/{{module}}_test.exs
+commands:
+- template:
+    source: ./templates/tests/room_ws_op.exs.hbs
+    destination: '{{dest}}'
+    overwrite: true
+    context:
+      outer_mod: '{{project}}'
+      def_mod: 'PortsTests . {{project}} . Message . {{module}}'

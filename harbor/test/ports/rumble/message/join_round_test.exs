@@ -1,4 +1,4 @@
-defmodule PierTest.Room.{{to-case "UpperCamel" module}}Test do
+defmodule PortsTests.Rumble.Message.JoinRound.JoinRoundTest do
   use ExUnit.Case, async: true
 
   alias PierTest.WsClient
@@ -14,7 +14,7 @@ defmodule PierTest.Room.{{to-case "UpperCamel" module}}Test do
     {:ok, user_id: user_id, client_ws: client_ws}
   end
 
-  describe "the websocket room:{{module}} operation" do
+  describe "the websocket rumble:join_round operation" do
     test "assert reply", t do
 
     end

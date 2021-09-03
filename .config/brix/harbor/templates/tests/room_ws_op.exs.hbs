@@ -1,0 +1,22 @@
+defmodule {{to-case "pascal" def_mod}}.{{to-case "pascal" module}}Test do
+  use ExUnit.Case, async: true
+
+  alias PierTest.WsClient
+  alias PierTest.WsClientFactory
+  alias HarborTest.Support.Factory
+
+  require WsClient
+
+  setup do
+    user_id = Factory.user_token()
+    client_ws = WsClientFactory.create_client_for(user_id)
+
+    {:ok, user_id: user_id, client_ws: client_ws}
+  end
+
+  describe "the websocket {{outer_mod}}:{{module}} operation" do
+    test "assert reply", t do
+
+    end
+  end
+end
