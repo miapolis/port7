@@ -3,6 +3,7 @@ defmodule PierTest.Room.KickTest do
 
   alias PierTest.WsClient
   alias PierTest.WsClientFactory
+  alias PierTest.Helpers.Room
   alias HarborTest.Support.Factory
 
   require WsClient
@@ -16,14 +17,7 @@ defmodule PierTest.Room.KickTest do
 
   describe "the websocket room:kick operation" do
     test "assert user to kick was kicked", t do
-      %{"id" => room_id} =
-        WsClient.do_call(t.client_ws, "room:create", %{
-          "name" => "foo",
-          "isPrivate" => false,
-          "game" => "rumble"
-        })
-
-      WsClient.do_call(t.client_ws, "room:join", %{"roomId" => room_id})
+      {room_id, _} = Room.create_and_join(t.client_ws, :rumble)
 
       other_ws = WsClientFactory.create_client_for(Factory.user_token())
 
@@ -32,6 +26,29 @@ defmodule PierTest.Room.KickTest do
       WsClient.send_msg(t.client_ws, "room:kick", %{"id" => toKickId})
 
       WsClient.assert_frame("kicked", %{"type" => "kick"}, other_ws)
+    end
+
+    test "cannot kick self", t do
+      {_room_id, peer_id} = Room.create_and_join(t.client_ws, :rumble)
+
+      WsClient.send_msg(t.client_ws, "room:kick", %{"id" => peer_id})
+
+      WsClient.refute_frame("remove_peer", t.client_ws)
+      WsClient.refute_frame("kicked", t.client_ws)
+    end
+
+    test "user without permissions cannot kick", t do
+      {room_id, peer_id} = Room.create_and_join(t.client_ws, :rumble)
+
+      other_ws = WsClientFactory.create_client_for(Factory.user_token())
+      join_peer_id = Room.join_existing(other_ws, room_id)
+
+      ExUnit.Assertions.assert(join_peer_id == 1)
+
+      WsClient.send_msg(other_ws, "room:kick", %{"id" => peer_id})
+
+      WsClient.refute_frame("remove_peer", other_ws)
+      WsClient.refute_frame("kicked", t.client_ws)
     end
   end
 end

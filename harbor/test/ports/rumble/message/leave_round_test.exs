@@ -17,7 +17,7 @@ defmodule PortsTests.Rumble.Message.LeaveRound.LeaveRoundTest do
 
   describe "the websocket rumble:leave_round operation" do
     test "assert reply", t do
-      _room_id = Room.create_and_join(t.client_ws, :rumble)
+      {_room_id, _} = Room.create_and_join(t.client_ws, :rumble)
 
       WsClient.send_msg(t.client_ws, "rumble:join_round", %{})
 
