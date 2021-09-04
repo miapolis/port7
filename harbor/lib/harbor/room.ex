@@ -86,6 +86,7 @@ defmodule Harbor.Room do
             roles: roles
           }
 
+          Anchorage.UserSession.set_state(user_id, %{is_disconnected: false})
           Anchorage.RoomSession.join_room(room.room_id, user_id, peer)
 
           Anchorage.PubSub.subscribe("chat:" <> room_id)
@@ -127,6 +128,20 @@ defmodule Harbor.Room do
     else
       nil
     end
+  end
+
+  def get_game_module(game) do
+    case game do
+      :rumble ->
+        Ports.Rumble.Game
+
+      _ ->
+        raise "invalid game"
+    end
+  end
+
+  def destroy_room(state) do
+    Anchorage.RoomCode.remove_code(state.room_code)
   end
 
   def get_profiles(room_id) do

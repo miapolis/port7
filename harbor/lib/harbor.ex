@@ -9,6 +9,7 @@ defmodule Harbor do
   @impl true
   def start(_type, _args) do
     Logger.info("Starting port7...")
+    Logger.info("MAIN PROCESS PID " <> inspect(self()))
 
     children = [
       Anchorage.Supervisors.UserSession,

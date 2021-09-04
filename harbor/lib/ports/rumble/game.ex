@@ -4,7 +4,7 @@ defmodule Ports.Rumble.Game do
   use GenServer, restart: :temporary
   require Logger
 
-  alias Quay.Utils
+  alias Harbor.Utils
   alias Ports.Rumble.Peer
   alias Ports.Rumble.Milestone
 
@@ -28,6 +28,7 @@ defmodule Ports.Rumble.Game do
   defp cast(room_id, params), do: GenServer.cast(via(room_id), params)
   # defp call(room_id, params), do: GenServer.call(via(room_id), params)
 
+  @impl true
   def start_link_supervised(initial_values) do
     case DynamicSupervisor.start_child(
            Anchorage.GameDynamicSupervisor,
@@ -80,6 +81,8 @@ defmodule Ports.Rumble.Game do
       case Map.fetch(state.peers, peer_id) do
         {:ok, peer} ->
           if not peer.is_joined do
+            Anchorage.RoomSession.event(state.room_id)
+
             Anchorage.RoomSession.broadcast_ws(state.room_id, %{
               op: "peer_joined_round",
               d: %{
@@ -165,6 +168,8 @@ defmodule Ports.Rumble.Game do
       case Map.fetch(state.peers, peer_id) do
         {:ok, peer} ->
           if peer.is_joined do
+            Anchorage.RoomSession.event(state.room_id)
+
             Anchorage.RoomSession.broadcast_ws(state.room_id, %{
               op: "peer_left_round",
               d: %{

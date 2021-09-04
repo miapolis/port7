@@ -1,12 +1,9 @@
 defmodule Quay.BaseGame do
-  # @spec peer_join(any(), Harbor.Peer.t()) :: any()
-  # def peer_join(room_id, peer)
+  # GENERAL
 
-  # @spec peer_leave(any(), Harbor.Peer.t()) :: any()
-  # def peer_leave(room_id, peer)
+  @callback start_link_supervised(any()) :: any()
 
-  # @spec peer_remove(any(), Harbor.Peer.t()) :: any()
-  # def peer_remove(room_id, peer)
+  # PEER OPERATIONS
 
   @callback peer_join(any(), any(), Harbor.Peer.t()) :: any()
 

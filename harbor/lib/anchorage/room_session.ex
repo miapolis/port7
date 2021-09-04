@@ -3,6 +3,11 @@ defmodule Anchorage.RoomSession do
 
   require Logger
 
+  alias Harbor.Utils.Time
+
+  @room_prune_interval_ms 1000 * 60 * 3
+  @max_room_age 1 * 60 * 5
+
   defmodule State do
     defimpl Jason.Encoder, for: State do
       def encode(value, opts) do
@@ -34,7 +39,8 @@ defmodule Anchorage.RoomSession do
             is_private: String.t(),
             peers: %{String.t() => Harbor.Peer.t()},
             game: atom(),
-            inner_game: Quay.BaseGame
+            inner_game: Quay.BaseGame,
+            last_event_timestamp: Habor.U
           }
 
     defstruct room_id: "",
@@ -43,7 +49,8 @@ defmodule Anchorage.RoomSession do
               is_private: false,
               peers: %{},
               game: :none,
-              inner_game: nil
+              inner_game: nil,
+              last_event_timestamp: nil
   end
 
   defp via(user_id), do: {:via, Registry, {Anchorage.RoomSessionRegistry, user_id}}
@@ -75,26 +82,47 @@ defmodule Anchorage.RoomSession do
 
     Anchorage.Chat.start_link_supervised(init)
 
-    module = get_game_module(init)
+    module = Harbor.Room.get_game_module(init[:game])
     module.start_link_supervised(init)
 
-    {:ok, struct(State, Keyword.merge(init, inner_game: module))}
-  end
+    run_prune_interval()
 
-  defp get_game_module(init) do
-    case init[:game] do
-      :rumble ->
-        Ports.Rumble.Game
-
-      _ ->
-        raise "invalid game"
-    end
+    {:ok,
+     struct(State, Keyword.merge(init, inner_game: module, last_event_timestamp: Time.s_now()))}
   end
 
   def ws_fan(peers, msg) do
     Enum.each(Map.keys(peers), fn uid ->
       Anchorage.UserSession.send_ws(uid, nil, msg)
     end)
+  end
+
+  ### - ROOM PRUNING - ################################################################
+
+  defp run_prune_interval() do
+    Process.send_after(self(), {:prune_check}, @room_prune_interval_ms)
+  end
+
+  def handle_info({:prune_check}, state) do
+    now = Time.s_now()
+
+    if state.last_event_timestamp + @max_room_age < now do
+      Logger.debug("Shutting down room process...")
+
+      ws_fan(state.peers, %{
+        op: "kicked",
+        d: %{
+          type: "inactivity",
+          reason: ""
+        }
+      })
+
+      Harbor.Room.destroy_room(state)
+
+      {:stop, :normal, state}
+    else
+      run_prune_interval()
+    end
   end
 
   ### - API - #########################################################################
@@ -138,6 +166,8 @@ defmodule Anchorage.RoomSession do
        | peers: Map.put(state.peers, user_id, peer)
      }}
   end
+
+  def event(room_id), do: cast(room_id, {:event})
 
   def disconnect_from_room(room_id, user_id), do: cast(room_id, {:disconnect_from_room, user_id})
 
@@ -214,4 +244,8 @@ defmodule Anchorage.RoomSession do
     do: remove_from_room_impl(user_id, action, state)
 
   def handle_cast({:broadcast_ws, msg}, state), do: broadcast_ws_impl(msg, state)
+
+  def handle_cast({:event}, state) do
+    {:noreply, %{state | last_event_timestamp: Time.s_now()}}
+  end
 end
