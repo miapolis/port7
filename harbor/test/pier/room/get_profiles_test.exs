@@ -34,18 +34,18 @@ defmodule PierTest.Room.GetProfilesTest do
       WsClient.assert_reply("room:get_profiles:reply", ref, %{
         "profiles" => [
           %{
-            "id" => 1,
-            "nickname" => "TEST USER",
-            "authMethod" => "port7",
-            "authUsername" => "",
-            "roles" => []
-          },
-          %{
             "id" => 0,
             "nickname" => "TEST USER",
             "authMethod" => "port7",
             "authUsername" => "",
             "roles" => ["leader"]
+          },
+          %{
+            "id" => 1,
+            "nickname" => "TEST USER",
+            "authMethod" => "port7",
+            "authUsername" => "",
+            "roles" => []
           }
         ]
       })

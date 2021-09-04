@@ -36,7 +36,7 @@ defmodule Pier.Message.Room.GetProfiles do
           }
         end)
 
-      {:reply, %Reply{profiles: profiles}, state}
+      {:reply, %Reply{profiles: Enum.sort(profiles, &(&1.id <= &2.id))}, state}
     end
   end
 end
