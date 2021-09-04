@@ -3,6 +3,7 @@ defmodule Harbor.Room do
   alias Harbor.Peer
 
   @max_room_size 100
+  def max_room_size, do: @max_room_size
 
   def create_room(
         room_name,
@@ -34,6 +35,8 @@ defmodule Harbor.Room do
     {:ok, %{room: room}}
   end
 
+  @spec join_room(String.t(), String.t()) ::
+          %{room: Anchorage.RoomSession.State.t(), peer: Peer.t()} | %{error: atom()}
   def join_room(room_id, user_id) do
     user_state = Anchorage.UserSession.get_state(user_id)
     current_room_id = user_state.current_room_id
@@ -59,7 +62,7 @@ defmodule Harbor.Room do
         Map.replace!(room.peers, user_id, new_peer)
         %{room: room, peer: new_peer}
       else
-        %{error: "already connected"}
+        %{error: :already_connected}
       end
     else
       case can_join_room(room_id, user_id) do
@@ -109,7 +112,7 @@ defmodule Harbor.Room do
 
     cond do
       Enum.count(peers) > @max_room_size ->
-        {:error, "room is full"}
+        {:error, :full}
 
       true ->
         {:ok, room}

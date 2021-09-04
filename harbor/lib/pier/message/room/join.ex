@@ -33,7 +33,13 @@ defmodule Pier.Message.Room.Join do
     with {:ok, %{roomId: room_id}} <- apply_action(changeset, :validate) do
       case Harbor.Room.join_room(room_id, state.user.user_id) do
         %{error: error} ->
-          {:error, error, state}
+          case error do
+            :full ->
+              {:reply, %{error: "room is full"}, state}
+
+            _ ->
+              {:error, error, state}
+          end
 
         %{room: room, peer: peer} ->
           user = %{state.user | current_room_id: room.room_id, peer_id: peer.id}

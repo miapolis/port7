@@ -3,6 +3,9 @@ defmodule {{to-case "pascal" def_mod}}.{{to-case "pascal" module}}Test do
 
   alias PierTest.WsClient
   alias PierTest.WsClientFactory
+  {{#if include_room}}
+  alias PierTest.Helpers.Room
+  {{/if}}
   alias HarborTest.Support.Factory
 
   require WsClient
