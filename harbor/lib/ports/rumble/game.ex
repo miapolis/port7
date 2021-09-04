@@ -20,7 +20,7 @@ defmodule Ports.Rumble.Game do
     defstruct room_id: nil, peers: %{}, milestone: nil, start_timer: nil
   end
 
-  @start_game_timeout 1000
+  @start_game_timeout 15000
   @min_players_for_game 2
 
   defp via(room_id), do: {:via, Registry, {Anchorage.GameRegistry, room_id}}

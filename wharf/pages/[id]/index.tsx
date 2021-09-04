@@ -57,7 +57,6 @@ RoomPage.getInitialProps = async ({ query }) => {
       await fetch(`${apiBaseUrl}/room/${query.id}`)
     ).json();
 
-    console.log(resp);
     if ("room" in resp) {
       room = resp.room;
     }

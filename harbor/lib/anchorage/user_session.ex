@@ -1,6 +1,8 @@
 defmodule Anchorage.UserSession do
   use GenServer, restart: :temporary
 
+  require Logger
+
   @idle_timeout_ms 60000
 
   defmodule State do
@@ -135,7 +137,7 @@ defmodule Anchorage.UserSession do
   end
 
   defp handle_disconnect(_, reason, state) do
-    IO.puts("Ending for reason " <> reason)
+    Logger.debug("Ending for reason " <> reason)
     # Immediate termination
     if state.current_room_id && state.user_id do
       Harbor.Room.remove_user(state.current_room_id, state.user_id)
