@@ -122,6 +122,8 @@ defmodule Anchorage.RoomSession do
       {:stop, :normal, state}
     else
       run_prune_interval()
+
+      {:noreply, state}
     end
   end
 
