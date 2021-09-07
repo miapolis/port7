@@ -3,6 +3,7 @@ import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "./use-rumble-store";
 import { secondsLeft } from "./util/time";
 import { me } from "@port7/modules/room/use-room-store";
+import { Button } from "@port7/ui/button";
 
 export const Join = () => {
   const conn = useConn();
@@ -56,12 +57,18 @@ export const Join = () => {
 
   return (
     <div className="flex flex-1 items-center justify-center flex-col">
-      {secondsToStart ? (
+      <div className="w-96 h-96 bg-primary-700 rounded-full flex items-center justify-center flex-col shadow-xl">
+        <div className="text-primary-100 text-2xl">No one is here yet</div>
+        <div className="text-primary-200 text-xl mb-4">
+          Click the join button below
+        </div>
+        <Button color="secondary" padding="large">JOIN ROUND</Button>
+      </div>
+      {/* {secondsToStart ? (
         <div className="mb-10 text-primary-100">
           {`Round will start in ${secondsToStart}s`}
         </div>
       ) : null}
-      <div className="text-primary-200 text-xl">Game will be here</div>
       {Array.from(state.joinedPeers).map(([_key, peer]) => {
         return (
           <div className="text-primary-100">{`${peer.nickname} is here`}</div>
@@ -81,7 +88,7 @@ export const Join = () => {
         >
           LEAVE ROUND
         </button>
-      )}
+      )} */}
     </div>
   );
 };

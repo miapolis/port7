@@ -5,13 +5,22 @@ import SmsRoundedIcon from "@material-ui/icons/SmsRounded";
 import PeopleIcon from "@material-ui/icons/People";
 import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
 import { PeerList } from "./peer-list";
+import { useResize } from "./use-resize";
 
 export const ChatPanel: React.FC = () => {
+  const size = useResize();
   const [selection, setSelection] = React.useState(1);
 
+  const outerClass =
+    size.x > 1200
+      ? "relative"
+      : size.x > 500
+      ? "w-96 absolute right-0 bottom-0 top-10 shadow-xl"
+      : "absolute right-0 bottom-0 top-10 w-full";
+
   return (
-    <div className="w-96 bg-primary-700 flex flex-col relative">
-      <div className="w-96 h-12 bg-primary-700 flex-shrink-0 grid grid-cols-3 gap-x-1">
+    <div className={`w-96 bg-primary-700 flex flex-col ${outerClass}`}>
+      <div className="w-full h-12 bg-primary-700 flex-shrink-0 grid grid-cols-3 gap-x-1">
         <ChatPanelIcon
           isSelected={selection === 1}
           icon={<SmsRoundedIcon style={{ color: "#dee3ea" }} />}
