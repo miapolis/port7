@@ -17,11 +17,19 @@ export const PeerList: React.FC = () => {
     getProfiles(conn);
   }, []);
 
+  React.useEffect(() => {
+    if (!profileStore.shouldUpdate) return;
+    getProfiles(conn);
+
+    profileStore.endUpdate();
+  }, [profileStore.shouldUpdate]);
+
   return (
     <div>
       {profileStore.profiles
         .sort((one, two) => {
-          if (one.roles.includes("leader") && !two.roles.includes("leader")) return -1;
+          if (one.roles.includes("leader") && !two.roles.includes("leader"))
+            return -1;
           if (one.id < two.id) return -1;
           if (one.id > two.id) return 1;
           return 0;

@@ -5,6 +5,7 @@ import {
   createSystemMessage,
 } from "../modules/room/use-room-chat-store";
 import { useRoomStore } from "@port7/modules/room/use-room-store";
+import { useProfilesStore } from "@port7/modules/room/use-profiles-store";
 
 export const useMainWsHandler = () => {
   const { conn } = React.useContext(WebSocketContext);
@@ -21,6 +22,8 @@ export const useMainWsHandler = () => {
         useRoomChatStore
           .getState()
           .addMessage(createSystemMessage(`${data.nickname} joined`));
+
+        useProfilesStore.getState().triggerUpdate();
       }),
       conn.addListener("peer_leave", ({ data }: any) => {
         const nickname = useRoomStore.getState().peers.get(data.id)?.nickname;
@@ -45,6 +48,8 @@ export const useMainWsHandler = () => {
             .addMessage(createSystemMessage(`${peer.nickname} ${ending}`));
         }
         useRoomStore.getState().removePeer(data.id);
+
+        useProfilesStore.getState().triggerUpdate();
       }),
       conn.addListener("new_leader", ({ data }: any) => {
         let peer = useRoomStore.getState().peers.get(data.id);
@@ -59,6 +64,8 @@ export const useMainWsHandler = () => {
         }
 
         useRoomChatStore.getState().addMessage(createSystemMessage(message));
+
+        useProfilesStore.getState().triggerUpdate();
       }),
       /////////////////////////////////////////////////////////////////////////
       ///// - CHAT FUNCTIONS - ////////////////////////////////////////////////
