@@ -14,4 +14,5 @@ config :sentry,
 config :logger, level: :info, backends: [:console, Sentry.LoggerBackend]
 
 config :harbor,
-  prune_rooms: true
+  prune_rooms: true,
+  user_session_timeout: 60000

@@ -3,7 +3,7 @@ defmodule Anchorage.UserSession do
 
   require Logger
 
-  @idle_timeout_ms 60000
+  @idle_timeout_ms Application.compile_env!(:harbor, :user_session_timeout)
 
   defmodule State do
     @derive {Jason.Encoder, only: [:nickname]}

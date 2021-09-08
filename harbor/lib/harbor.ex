@@ -7,6 +7,7 @@ defmodule Harbor do
   def games(), do: @games
 
   @config_prune_rooms Application.compile_env!(:harbor, :prune_rooms)
+  @config_user_session_timeout Application.compile_env!(:harbor, :user_session_timeout)
 
   @impl true
   @spec start(any, any) :: {:error, any} | {:ok, pid}
@@ -81,7 +82,10 @@ defmodule Harbor do
       :timer.sleep(16)
     end
 
-    config = config_opt(:MIX_ENV, Mix.env()) <> config_opt(:prune_rooms, @config_prune_rooms)
+    config =
+      config_opt(:MIX_ENV, Mix.env()) <>
+        config_opt(:prune_rooms, @config_prune_rooms) <>
+        config_opt(:user_session_timeout, @config_user_session_timeout)
 
     IO.puts(
       "\n\n> CONFIG#{config}\n#{IO.ANSI.faint()}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#{IO.ANSI.reset()}"
