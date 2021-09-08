@@ -38,7 +38,7 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
               />
               <div className="flex flex-row h-full w-full overflow-hidden">
                 <MainLayout />
-                {chatOpen ? <ChatPanel /> : undefined}
+                <ChatPanel open={chatOpen} />
               </div>
               <ManagePeerModal
                 open={peerModalStore.open}

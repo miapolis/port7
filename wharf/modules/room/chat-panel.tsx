@@ -7,7 +7,11 @@ import ArrowBackRoundedIcon from "@material-ui/icons/ArrowBackRounded";
 import { PeerList } from "./peer-list";
 import { useResize } from "./use-resize";
 
-export const ChatPanel: React.FC = () => {
+export interface ChatPanelProps {
+  open: boolean;
+}
+
+export const ChatPanel: React.FC<ChatPanelProps> = ({ open }) => {
   const size = useResize();
   const [selection, setSelection] = React.useState(1);
 
@@ -19,7 +23,7 @@ export const ChatPanel: React.FC = () => {
       : "absolute right-0 bottom-0 top-10 w-full";
 
   return (
-    <div className={`w-96 bg-primary-700 flex flex-col ${outerClass}`}>
+    <div className={`w-96 bg-primary-700 flex flex-col ${outerClass} ${!open ? "hidden" : ""}`}>
       <div className="w-full h-12 bg-primary-700 flex-shrink-0 grid grid-cols-3 gap-x-1">
         <ChatPanelIcon
           isSelected={selection === 1}
