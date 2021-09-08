@@ -15,7 +15,7 @@ export const ChatPanel: React.FC = () => {
     size.x > 1200
       ? "relative"
       : size.x > 500
-      ? "w-96 absolute right-0 bottom-0 top-10 shadow-xl"
+      ? "w-96 absolute right-0 bottom-0 top-12 shadow-xl"
       : "absolute right-0 bottom-0 top-10 w-full";
 
   return (

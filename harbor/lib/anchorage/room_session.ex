@@ -5,6 +5,7 @@ defmodule Anchorage.RoomSession do
 
   alias Harbor.Utils.Time
 
+  @prune_rooms Application.compile_env!(:harbor, :prune_rooms)
   @room_prune_interval_ms 1000 * 60 * 3
   @max_room_age 1 * 60 * 5
 
@@ -77,6 +78,7 @@ defmodule Anchorage.RoomSession do
     GenServer.start_link(__MODULE__, init, name: via(init[:room_id]))
   end
 
+  @dialyzer {:no_match, {:init, 1}}
   def init(init) do
     Logger.debug("CREATING ROOM WITH INIT " <> inspect(init))
 
@@ -85,7 +87,9 @@ defmodule Anchorage.RoomSession do
     module = Harbor.Room.get_game_module(init[:game])
     module.start_link_supervised(init)
 
-    run_prune_interval()
+    if @prune_rooms do
+      run_prune_interval()
+    end
 
     {:ok,
      struct(State, Keyword.merge(init, inner_game: module, last_event_timestamp: Time.s_now()))}

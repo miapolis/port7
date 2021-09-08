@@ -19,6 +19,8 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const roomStore = useRoomStore();
   const peerModalStore = usePeerModalStore();
 
+  const [chatOpen, setChatOpen] = React.useState(true);
+
   React.useEffect(() => {
     roomStore.setRoom(room);
     roomStore.setPeers([]);
@@ -30,10 +32,13 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
         <WaitForWsAndAuth>
           <RoomEnter room={room}>
             <div className="w-full h-full flex flex-col">
-              <Header />
+              <Header
+                chatOpen={chatOpen}
+                onChatOpenToggel={() => setChatOpen(!chatOpen)}
+              />
               <div className="flex flex-row h-full w-full overflow-hidden">
                 <MainLayout />
-                <ChatPanel />
+                {chatOpen ? <ChatPanel /> : undefined}
               </div>
               <ManagePeerModal
                 open={peerModalStore.open}

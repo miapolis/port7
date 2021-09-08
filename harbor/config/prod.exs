@@ -12,3 +12,6 @@ config :sentry,
   included_environments: [:prod]
 
 config :logger, level: :info, backends: [:console, Sentry.LoggerBackend]
+
+config :harbor,
+  prune_rooms: true
