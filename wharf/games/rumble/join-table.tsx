@@ -3,6 +3,7 @@ import { Peer } from "@port7/dock/lib/games/rumble/interfaces";
 import { Button } from "@port7/ui";
 import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "./use-rumble-store";
+import { PlayerSeat } from "./player-seat";
 
 export interface JoinTableProps {
   peers: Peer[];
@@ -57,6 +58,7 @@ export const JoinTable: React.FC<JoinTableProps> = ({
         {/* {innerPeers.map((peer) => (
           <div key={peer.id}>{peer.nickname}</div>
         ))} */}
+        <PlayerSeat angle={0}/>
       </div>
     </div>
   );
