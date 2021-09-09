@@ -10,7 +10,11 @@ export interface JoinTableProps {
   onJoinClick?: () => void;
 }
 
-export const JoinTable: React.FC<JoinTableProps> = ({ peers, isJoined, onJoinClick }) => {
+export const JoinTable: React.FC<JoinTableProps> = ({
+  peers,
+  isJoined,
+  onJoinClick,
+}) => {
   const conn = useConn();
   const [innerPeers, setInnerPeers] = React.useState<Peer[]>(peers);
 
@@ -22,13 +26,17 @@ export const JoinTable: React.FC<JoinTableProps> = ({ peers, isJoined, onJoinCli
       useRumbleStore.getState().removeJoinedPeer(data.id);
     });
     conn.addListener("peer_joined_round", ({ data }: any) => {
-      console.log("happened");
       useRumbleStore.getState().addJoinedPeer(data.id, data.nickname);
 
-      setInnerPeers([...innerPeers, {id: data.id, nickname: data.nickname, isDisconnected: false}])
+      setInnerPeers([
+        ...innerPeers,
+        { id: data.id, nickname: data.nickname, isDisconnected: false },
+      ]);
     });
     conn.addListener("peer_left_round", ({ data }: any) => {
       useRumbleStore.getState().removeJoinedPeer(data.id);
+
+      setInnerPeers(innerPeers.filter((x) => x.id !== data.id));
     });
   }, [conn]);
 
@@ -39,14 +47,16 @@ export const JoinTable: React.FC<JoinTableProps> = ({ peers, isJoined, onJoinCli
         <div className="text-primary-200 text-xl mb-4">
           Click the join button below
         </div>
-        <Button color="secondary" padding="large" onClick={onJoinClick}>
-          JOIN ROUND
+        <Button
+          color={!isJoined ? "secondary" : "ternary"}
+          padding={!isJoined ? "large" : "normal"}
+          onClick={onJoinClick}
+        >
+          {!isJoined ? "JOIN ROUND" : "LEAVE ROUND"}
         </Button>
-        {
-          innerPeers.map((peer) => (
-            <div key={peer.id}>{peer.nickname}</div>
-          ))
-        }
+        {/* {innerPeers.map((peer) => (
+          <div key={peer.id}>{peer.nickname}</div>
+        ))} */}
       </div>
     </div>
   );
