@@ -3,7 +3,8 @@ import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "./use-rumble-store";
 import { secondsLeft } from "./util/time";
 import { me } from "@port7/modules/room/use-room-store";
-import { Button } from "@port7/ui/button";
+import { JoinTable } from "./join-table";
+import { Peer } from "@port7/dock/lib/games/rumble/interfaces";
 
 export const Join = () => {
   const conn = useConn();
@@ -32,6 +33,7 @@ export const Join = () => {
     number | undefined
   >();
 
+
   React.useEffect(() => {
     if (!state.startTimestamp || !state.serverToLocalNow) {
       if (startTimerInterval) clearInterval(startTimerInterval);
@@ -57,13 +59,11 @@ export const Join = () => {
 
   return (
     <div className="flex flex-1 items-center justify-center flex-col">
-      <div className="w-96 h-96 bg-primary-700 rounded-full flex items-center justify-center flex-col shadow-xl">
-        <div className="text-primary-100 text-2xl">No one is here yet</div>
-        <div className="text-primary-200 text-xl mb-4">
-          Click the join button below
-        </div>
-        <Button color="secondary" padding="large">JOIN ROUND</Button>
-      </div>
+      <JoinTable
+        peers={Array.from(useRumbleStore.getState().joinedPeers.values())}
+        isJoined={isJoined}
+        onJoinClick={joinButtonClicked}
+      />
       {/* {secondsToStart ? (
         <div className="mb-10 text-primary-100">
           {`Round will start in ${secondsToStart}s`}
