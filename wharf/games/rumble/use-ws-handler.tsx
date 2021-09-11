@@ -27,6 +27,9 @@ export const useWsHandler = () => {
       conn.addListener("cancel_start_round", ({}: any) => {
         useRumbleStore.getState().setStartTimestamp(undefined);
       }),
+      conn.addListener("remove_peer", ({ data }: any) => {
+        useRumbleStore.getState().removeJoinedPeer(data.id);
+      }),
     ];
 
     return () => {
