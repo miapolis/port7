@@ -10,11 +10,8 @@ export const useWsHandler = () => {
 
     const unsubs = [
       conn.addListener("landing", ({ data }: any) => {
-        useRumbleStore
-          .getState()
-          .setJoinedPeers(
-            data.peers.filter((x: any) => x.isJoined === true) || []
-          );
+        const filtered = data.peers.filter((x: any) => x.isJoined === true);
+        useRumbleStore.getState().setJoinedPeers(filtered);
 
         useRumbleStore.getState().setServerNow(data.milestone.serverNow);
         if (data.milestone.startTime) {

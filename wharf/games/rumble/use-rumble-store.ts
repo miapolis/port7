@@ -35,9 +35,10 @@ export const useRumbleStore = create<RumbleState>((set) => ({
     }));
   },
   setJoinedPeers: (peers: Peer[]) => {
-    set((_state) => ({
-      joinedPeers: new Map(peers.map((obj) => [obj.id, obj])),
-    }));
+    set((_state) => {
+      const mapped = new Map(peers.map((obj) => [obj.id, obj]));
+      return { joinedPeers: mapped };
+    });
   },
   addJoinedPeer: (id: number, nickname: string) => {
     set((state) => ({

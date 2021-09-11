@@ -33,7 +33,6 @@ export const Join = () => {
     number | undefined
   >();
 
-
   React.useEffect(() => {
     if (!state.startTimestamp || !state.serverToLocalNow) {
       if (startTimerInterval) clearInterval(startTimerInterval);
@@ -60,7 +59,7 @@ export const Join = () => {
   return (
     <div className="flex flex-1 items-center justify-center flex-col">
       <JoinTable
-        peers={Array.from(useRumbleStore.getState().joinedPeers.values())}
+        peers={Array.from(state.joinedPeers.values())}
         isJoined={isJoined}
         onJoinClick={joinButtonClicked}
       />

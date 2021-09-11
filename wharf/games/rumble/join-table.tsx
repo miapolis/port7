@@ -17,7 +17,7 @@ export const JoinTable: React.FC<JoinTableProps> = ({
   onJoinClick,
 }) => {
   const conn = useConn();
-  const [innerPeers, setInnerPeers] = React.useState<Peer[]>(peers);
+  // const [innerPeers, setInnerPeers] = React.useState<Peer[]>(peers);
 
   // Main WS event handler for peers
   React.useEffect(() => {
@@ -25,19 +25,21 @@ export const JoinTable: React.FC<JoinTableProps> = ({
 
     conn.addListener("game_remove_peer", ({ data }: any) => {
       useRumbleStore.getState().removeJoinedPeer(data.id);
+      // setInnerPeers(innerPeers.filter((x) => x.id != data.id));
     });
     conn.addListener("peer_joined_round", ({ data }: any) => {
+      // console.log("CURRENT STATE OF INNER PEERS", innerPeers);
       useRumbleStore.getState().addJoinedPeer(data.id, data.nickname);
 
-      setInnerPeers([
-        ...innerPeers,
-        { id: data.id, nickname: data.nickname, isDisconnected: false },
-      ]);
+      // console.log("EXISTING", innerPeers);
+      // setInnerPeers([
+      //   ...innerPeers,
+      //   { id: data.id, nickname: data.nickname, isDisconnected: false },
+      // ]);
     });
     conn.addListener("peer_left_round", ({ data }: any) => {
       useRumbleStore.getState().removeJoinedPeer(data.id);
-
-      setInnerPeers(innerPeers.filter((x) => x.id !== data.id));
+      // setInnerPeers(new Array());
     });
   }, [conn]);
 
@@ -55,10 +57,15 @@ export const JoinTable: React.FC<JoinTableProps> = ({
         >
           {!isJoined ? "JOIN ROUND" : "LEAVE ROUND"}
         </Button>
-        {/* {innerPeers.map((peer) => (
-          <div key={peer.id}>{peer.nickname}</div>
-        ))} */}
-        <PlayerSeat angle={0}/>
+        {Array.from(useRumbleStore.getState().joinedPeers.values()).map(
+          (peer, index) => (
+            <PlayerSeat
+              angle={index * -90}
+              nickname={peer.nickname}
+              key={peer.id}
+            />
+          )
+        )}
       </div>
     </div>
   );
