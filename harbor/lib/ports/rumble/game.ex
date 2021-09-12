@@ -17,7 +17,7 @@ defmodule Ports.Rumble.Game do
             milestone: Milestone.t()
           }
 
-    defstruct room_id: nil, peers: %{}, milestone: nil, start_timer: nil
+    defstruct room_id: nil, peers: %{}, milestone: nil
   end
 
   @start_game_timeout 15000
@@ -189,7 +189,7 @@ defmodule Ports.Rumble.Game do
                 state.milestone.start_timer
               end
 
-            %{state | peers: peers, start_timer: start_timer}
+            %{state | peers: peers, milestone: %{state.milestone | start_timer: start_timer}}
           else
             state
           end
