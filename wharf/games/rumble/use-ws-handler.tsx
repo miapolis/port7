@@ -20,15 +20,24 @@ export const useWsHandler = () => {
 
         useRumbleStore.getState().doLanding();
       }),
+      conn.addListener("peer_joined_round", ({ data }: any) => {
+        useRumbleStore.getState().addJoinedPeer(data.id, data.nickname);
+      }),
+      conn.addListener("game_remove_peer", ({ data }: any) => {
+        useRumbleStore.getState().removeJoinedPeer(data.id);
+      }),
+      conn.addListener("peer_left_round", ({ data }: any) => {
+        useRumbleStore.getState().removeJoinedPeer(data.id);
+      }),
+      conn.addListener("remove_peer", ({ data }: any) => {
+        useRumbleStore.getState().removeJoinedPeer(data.id);
+      }),
       conn.addListener("round_starting", ({ data }: any) => {
         useRumbleStore.getState().setServerNow(data.now);
         useRumbleStore.getState().setStartTimestamp(data.in);
       }),
       conn.addListener("cancel_start_round", ({}: any) => {
         useRumbleStore.getState().setStartTimestamp(undefined);
-      }),
-      conn.addListener("remove_peer", ({ data }: any) => {
-        useRumbleStore.getState().removeJoinedPeer(data.id);
       }),
     ];
 

@@ -1,7 +1,5 @@
 import React from "react";
-import { Peer } from "@port7/dock/lib/games/rumble/interfaces";
 import { Button } from "@port7/ui";
-import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "./use-rumble-store";
 import { PlayerSeat } from "./player-seat";
 
@@ -16,7 +14,6 @@ export const JoinTable: React.FC<JoinTableProps> = ({
   secondsToStart,
   onJoinClick,
 }) => {
-  const conn = useConn();
   const joinedPeers = useRumbleStore().joinedPeers;
   const mainStatusRef = React.useRef<HTMLDivElement>(null);
 
@@ -44,30 +41,6 @@ export const JoinTable: React.FC<JoinTableProps> = ({
     }
     setStatus(newStatus);
   }, [joinedPeers.size]);
-
-  // Main WS event handler for peers
-  React.useEffect(() => {
-    if (!conn) return;
-
-    conn.addListener("game_remove_peer", ({ data }: any) => {
-      useRumbleStore.getState().removeJoinedPeer(data.id);
-      // setInnerPeers(innerPeers.filter((x) => x.id != data.id));
-    });
-    conn.addListener("peer_joined_round", ({ data }: any) => {
-      // console.log("CURRENT STATE OF INNER PEERS", innerPeers);
-      useRumbleStore.getState().addJoinedPeer(data.id, data.nickname);
-
-      // console.log("EXISTING", innerPeers);
-      // setInnerPeers([
-      //   ...innerPeers,
-      //   { id: data.id, nickname: data.nickname, isDisconnected: false },
-      // ]);
-    });
-    conn.addListener("peer_left_round", ({ data }: any) => {
-      useRumbleStore.getState().removeJoinedPeer(data.id);
-      // setInnerPeers(new Array());
-    });
-  }, [conn]);
 
   return (
     <div>

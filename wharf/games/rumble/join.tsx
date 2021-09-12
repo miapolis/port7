@@ -4,25 +4,19 @@ import { useRumbleStore } from "./use-rumble-store";
 import { secondsLeft } from "./util/time";
 import { me } from "@port7/modules/room/use-room-store";
 import { JoinTable } from "./join-table";
+import { iAmJoined } from "./i-am-joined";
 
 export const Join = () => {
   const conn = useConn();
   const state = useRumbleStore();
-  const self = me();
-
-  const [isJoined, setIsJoined] = React.useState(
-    Array.from(state.joinedPeers.values() || [])
-      .map((x) => x.id)
-      .includes(self.id)
-  );
+  const joined = iAmJoined();
 
   const joinButtonClicked = async () => {
-    if (!isJoined) {
+    if (!joined) {
       conn?.sendCast("rumble:join_round", {});
     } else {
       conn?.sendCast("rumble:leave_round", {});
     }
-    setIsJoined(!isJoined);
   };
 
   const [tableScale, setTableScale] = React.useState<number | undefined>();
@@ -73,7 +67,7 @@ export const Join = () => {
       {tableScale ? (
         <div style={{ transform: `scale(${tableScale})` }}>
           <JoinTable
-            isJoined={isJoined}
+            isJoined={joined}
             secondsToStart={secondsToStart || 15}
             onJoinClick={joinButtonClicked}
           />
