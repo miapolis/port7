@@ -23,7 +23,7 @@ defmodule Ports.Rumble.Milestone do
   defstruct state: nil, start_time: nil, start_timer: nil, current_turn: nil
 
   @type t :: %__MODULE__{
-          state: atom(),
+          state: binary(),
           start_time: number(),
           start_timer: any(),
           current_turn: integer()
@@ -33,15 +33,25 @@ defmodule Ports.Rumble.Milestone do
 end
 
 defmodule Ports.Rumble.Milestone.StateMachine do
+  require Logger
+
   use Fsmx.Fsm,
     transitions: %{
-      :lobby => :game,
-      :game => [:scores, :podium],
-      :scores => :game,
-      :podium => :lobby
+      "lobby" => "game",
+      "game" => ["lobby", "scores", "podium"],
+      "scores" => "game",
+      "podium" => "lobby"
     }
 
-  def before_transition(%{current_turn: nil}, _initial, :game) do
+  def before_transition(%{current_turn: nil}, _initial, "game") do
     {:error, "cannot transition to game without setting the current turn"}
+  end
+
+  def before_transition(struct, "lobby", "game") do
+    {:ok, %{struct | start_time: nil, start_timer: nil}}
+  end
+
+  def before_transition(struct, "game", "lobby") do
+    {:ok, %{struct | current_turn: nil}}
   end
 end

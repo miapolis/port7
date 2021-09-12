@@ -62,7 +62,7 @@ defmodule Ports.Rumble.Game do
        State,
        Keyword.merge(init,
          milestone: %Milestone{
-           state: :lobby,
+           state: "lobby",
            start_time: nil,
            start_timer: nil
          }
@@ -76,7 +76,7 @@ defmodule Ports.Rumble.Game do
     cast(room_id, {:join_round, peer_id})
   end
 
-  defp join_round_impl(peer_id, %{milestone: %{state: :lobby}} = state) do
+  defp join_round_impl(peer_id, %{milestone: %{state: "lobby"}} = state) do
     new_state =
       case Map.fetch(state.peers, peer_id) do
         {:ok, peer} ->
@@ -135,6 +135,17 @@ defmodule Ports.Rumble.Game do
     {then, ref}
   end
 
+  defp maybe_cancel_start_timer(state, peers) do
+    peers_left = count_joined_peers(peers)
+
+    if peers_left < @min_players_for_game and not is_nil(state.milestone.start_timer) do
+      cancel_start_timer(state)
+      nil
+    else
+      state.milestone.start_timer
+    end
+  end
+
   defp cancel_start_timer(state) do
     Anchorage.RoomSession.broadcast_ws(state.room_id, %{
       op: "cancel_start_round",
@@ -144,18 +155,37 @@ defmodule Ports.Rumble.Game do
     Process.cancel_timer(state.milestone.start_timer)
   end
 
-  # Suppress warnings because Fsxm only has binary() in the spec for transition
-  @dialyzer {:no_return, {:start_game, 1}}
-  @dialyzer {:no_fail_call, {:start_game, 1}}
+  defp broadcast_milestone(room_id, milestone) do
+    Anchorage.RoomSession.broadcast_ws(room_id, %{
+      op: "set_milestone",
+      d: milestone
+    })
+  end
+
   def start_game(state) do
     milestone = %{state.milestone | current_turn: next_turn(state)}
 
-    case Fsmx.transition(milestone, :game) do
+    case Fsmx.transition(milestone, "game") do
       {:ok, milestone} ->
-        Anchorage.RoomSession.broadcast_ws(state.room_id, %{
-          op: "set_milestone",
-          d: milestone
-        })
+        broadcast_milestone(state.room_id, milestone)
+
+        %{state | milestone: milestone}
+
+      _ ->
+        state
+    end
+  end
+
+  def return_to_lobby(state) do
+    case Fsmx.transition(state.milestone, "lobby") do
+      {:ok, milestone} ->
+        broadcast_milestone(state.room_id, milestone)
+        peers = for {id, peer} <- state.peers, into: %{}, do: {id, %{peer | is_joined: false}}
+
+        %{state | milestone: milestone, peers: peers}
+
+      _ ->
+        state
     end
   end
 
@@ -163,7 +193,7 @@ defmodule Ports.Rumble.Game do
     cast(room_id, {:leave_round, peer_id})
   end
 
-  defp leave_round_impl(peer_id, %{milestone: %{state: :lobby}} = state) do
+  defp leave_round_impl(peer_id, %{milestone: %{state: "lobby"}} = state) do
     new_state =
       case Map.fetch(state.peers, peer_id) do
         {:ok, peer} ->
@@ -178,16 +208,7 @@ defmodule Ports.Rumble.Game do
             })
 
             peers = Map.replace!(state.peers, peer_id, %{peer | is_joined: false})
-
-            peers_left = count_joined_peers(peers)
-
-            start_timer =
-              if peers_left < @min_players_for_game and not is_nil(state.milestone.start_timer) do
-                cancel_start_timer(state)
-                nil
-              else
-                state.milestone.start_timer
-              end
+            start_timer = maybe_cancel_start_timer(state, peers)
 
             %{state | peers: peers, milestone: %{state.milestone | start_timer: start_timer}}
           else
@@ -203,14 +224,36 @@ defmodule Ports.Rumble.Game do
 
   defp leave_round_impl(_peer_id, state), do: {:noreply, state}
 
-  defp handle_remove_peer(peer, state) do
-    if state.milestone == :lobby do
-      Anchorage.RoomSession.broadcast_ws(state.room_id, %{
-        op: "game_remove_peer",
-        d: %{
-          id: peer.id
+  defp handle_remove_peer(peer, state, remaining_peers) do
+    Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+      op: "game_remove_peer",
+      d: %{
+        id: peer.id
+      }
+    })
+
+    case state.milestone.state do
+      "lobby" ->
+        start_timer = maybe_cancel_start_timer(state, remaining_peers)
+
+        %{
+          state
+          | peers: remaining_peers,
+            milestone: %{state.milestone | start_timer: start_timer}
         }
-      })
+
+      "game" ->
+        if Enum.count(remaining_peers) < @min_players_for_game do
+          new_state = return_to_lobby(state)
+
+          %{
+            state
+            | milestone: new_state.milestone,
+              peers: new_state.peers
+          }
+        else
+          %{state | peers: remaining_peers}
+        end
     end
   end
 
@@ -318,8 +361,8 @@ defmodule Ports.Rumble.Game do
 
   defp peer_remove_impl(peer, state) do
     peers = Map.delete(state.peers, peer.id)
-    handle_remove_peer(peer, state)
-    {:noreply, %{state | peers: peers}}
+    new_state = handle_remove_peer(peer, state, peers)
+    {:noreply, new_state}
   end
 
   @impl true
@@ -333,10 +376,13 @@ defmodule Ports.Rumble.Game do
   def handle_cast({:leave_round, peer_id}, state), do: leave_round_impl(peer_id, state)
 
   @impl true
-  def handle_info({:start_game}, %{milestone: %{state: :lobby, start_timer: start_timer}} = state) do
+  def handle_info(
+        {:start_game},
+        %{milestone: %{state: "lobby", start_timer: start_timer}} = state
+      ) do
     if not is_nil(start_timer) do
-      start_game(state)
-      {:noreply, %{state | milestone: %{start_timer: nil, start_time: nil}}}
+      new_state = start_game(state)
+      {:noreply, %{state | milestone: new_state.milestone, peers: new_state.peers}}
     else
       {:noreply, state}
     end
