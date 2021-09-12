@@ -6,18 +6,44 @@ import { useRumbleStore } from "./use-rumble-store";
 import { PlayerSeat } from "./player-seat";
 
 export interface JoinTableProps {
-  peers: Peer[];
   isJoined: boolean;
+  secondsToStart: number;
   onJoinClick?: () => void;
 }
 
 export const JoinTable: React.FC<JoinTableProps> = ({
-  peers,
   isJoined,
+  secondsToStart,
   onJoinClick,
 }) => {
   const conn = useConn();
-  // const [innerPeers, setInnerPeers] = React.useState<Peer[]>(peers);
+  const joinedPeers = useRumbleStore().joinedPeers;
+  const mainStatusRef = React.useRef<HTMLDivElement>(null);
+
+  const [status, setStatus] = React.useState<string[]>(["", ""]);
+
+  React.useEffect(() => {
+    let newStatus;
+    switch (joinedPeers.size) {
+      case 0:
+        newStatus = ["No one is here yet", "Click the join button below"];
+        break;
+      case 1:
+        newStatus = [
+          "Waiting for one more player",
+          "Click the join button below",
+        ];
+        break;
+      case 2:
+      case 3:
+        newStatus = [`Round starting in $s`, "Join before it's too late!"];
+        break;
+      default:
+        newStatus = [`Round starting in $s`, "All seats are full"];
+        break;
+    }
+    setStatus(newStatus);
+  }, [joinedPeers.size]);
 
   // Main WS event handler for peers
   React.useEffect(() => {
@@ -46,10 +72,10 @@ export const JoinTable: React.FC<JoinTableProps> = ({
   return (
     <div>
       <div className="w-96 h-96 bg-primary-700 rounded-full flex items-center justify-center flex-col shadow-xl">
-        <div className="text-primary-100 text-2xl">No one is here yet</div>
-        <div className="text-primary-200 text-xl mb-4">
-          Click the join button below
+        <div className="text-primary-100 text-2xl" ref={mainStatusRef}>
+          {status[0].replace("$", secondsToStart.toString())}
         </div>
+        <div className="text-primary-200 text-xl mb-4">{status[1]}</div>
         <Button
           color={!isJoined ? "secondary" : "ternary"}
           padding={!isJoined ? "large" : "normal"}

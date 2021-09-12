@@ -59,8 +59,8 @@ export const Join = () => {
   return (
     <div className="flex flex-1 items-center justify-center flex-col">
       <JoinTable
-        peers={Array.from(state.joinedPeers.values())}
         isJoined={isJoined}
+        secondsToStart={secondsToStart || 0}
         onJoinClick={joinButtonClicked}
       />
       {/* {secondsToStart ? (
