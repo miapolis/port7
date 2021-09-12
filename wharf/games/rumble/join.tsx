@@ -46,8 +46,8 @@ export const Join = () => {
   }, []);
 
   React.useEffect(() => {
+    if (startTimerInterval) clearInterval(startTimerInterval);
     if (!state.startTimestamp || !state.serverToLocalNow) {
-      if (startTimerInterval) clearInterval(startTimerInterval);
       setSecondsToStart(undefined);
       return;
     }
