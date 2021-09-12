@@ -10,6 +10,7 @@ import { MainLayout } from "@port7/modules/room/main-layout";
 import { ChatPanel } from "@port7/modules/room/chat-panel";
 import { ManagePeerModal } from "@port7/modules/room/manage-peer-modal";
 import { usePeerModalStore } from "@port7/modules/room/use-peer-modal-store";
+import { KEY_CHAT_OPEN } from "@port7/lib/local-storage";
 
 interface RoomPageProps {
   room?: Room;
@@ -19,7 +20,10 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
   const roomStore = useRoomStore();
   const peerModalStore = usePeerModalStore();
 
-  const [chatOpen, setChatOpen] = React.useState(true);
+  const [chatOpen, setChatOpen] = React.useState(() => {
+    const value = localStorage.getItem(KEY_CHAT_OPEN);
+    return value == undefined || value === "true";
+  });
 
   React.useEffect(() => {
     roomStore.setRoom(room);
@@ -34,7 +38,10 @@ const RoomPage: PageComponent<RoomPageProps> = ({ room }) => {
             <div className="w-full h-full flex flex-col">
               <Header
                 chatOpen={chatOpen}
-                onChatOpenToggel={() => setChatOpen(!chatOpen)}
+                onChatOpenToggel={() => {
+                  setChatOpen(!chatOpen);
+                  localStorage.setItem(KEY_CHAT_OPEN, (!chatOpen).toString());
+                }}
               />
               <div className="flex flex-row h-full w-full overflow-hidden">
                 <MainLayout />
