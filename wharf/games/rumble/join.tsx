@@ -26,12 +26,25 @@ export const Join = () => {
     setIsJoined(!isJoined);
   };
 
+  const [tableScale, setTableScale] = React.useState<number | undefined>();
   const [startTimerInterval, setStartTimerInterval] = React.useState<
     NodeJS.Timer | undefined
   >();
   const [secondsToStart, setSecondsToStart] = React.useState<
     number | undefined
   >();
+
+  const calcScale = () => {
+    const width = window.innerWidth;
+    setTableScale(Math.min(1, width / 700));
+  };
+
+  React.useEffect(() => {
+    calcScale();
+    window.addEventListener("resize", () => {
+      calcScale();
+    });
+  }, []);
 
   React.useEffect(() => {
     if (!state.startTimestamp || !state.serverToLocalNow) {
@@ -58,11 +71,15 @@ export const Join = () => {
 
   return (
     <div className="flex flex-1 items-center justify-center flex-col">
-      <JoinTable
-        isJoined={isJoined}
-        secondsToStart={secondsToStart || 0}
-        onJoinClick={joinButtonClicked}
-      />
+      {tableScale ? (
+        <div style={{ transform: `scale(${tableScale})` }}>
+          <JoinTable
+            isJoined={isJoined}
+            secondsToStart={secondsToStart || 15}
+            onJoinClick={joinButtonClicked}
+          />
+        </div>
+      ) : null}
       {/* {secondsToStart ? (
         <div className="mb-10 text-primary-100">
           {`Round will start in ${secondsToStart}s`}

@@ -24,25 +24,30 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           <animated.div
             className="relative pointer-events-none"
             style={{
-              width: 400,
-              height: 400,
+              width: 500,
+              height: 500,
               transform: `rotate(${angle}deg)`,
               transition: "transform 0.7s",
               ...style,
             }}
           >
             <div
-              className="absolute flex items-center justify-center"
+              className="absolute flex items-center justify-center bg-primary-700 rounded-full"
               style={{
                 transform: `rotate(${angle * -1}deg)`,
-                bottom: "-30px",
-                left: "170px",
-                width: 60,
-                height: 60,
+                bottom: "-45px",
+                left: "205px",
+                width: 90,
+                height: 90,
                 transition: "transform 0.7s",
               }}
             >
-              <div className="text-primary-100">{nickname}</div>
+              <span
+                className="text-primary-100 text-center table-cell"
+                style={{ verticalAlign: "middle", lineHeight: "normal" }}
+              >
+                {nickname}
+              </span>
             </div>
           </animated.div>
         );
