@@ -28,15 +28,21 @@ export const JoinTable: React.FC<JoinTableProps> = ({
       case 1:
         newStatus = [
           "Waiting for one more player",
-          "Click the join button below",
+          !isJoined ? "Click the join button below" : "",
         ];
         break;
       case 2:
       case 3:
-        newStatus = [`Round starting in $s`, "Join before it's too late!"];
+        newStatus = [
+          `Round starting in $s`,
+          !isJoined ? "Join before it's too late!" : "",
+        ];
         break;
       default:
-        newStatus = [`Round starting in $s`, "All seats are full"];
+        newStatus = [
+          `Round starting in $s`,
+          !isJoined ? "All seats are full" : "",
+        ];
         break;
     }
     setStatus(newStatus);
