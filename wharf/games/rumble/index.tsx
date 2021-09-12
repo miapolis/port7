@@ -6,12 +6,11 @@ import { Join } from "./join";
 export const Rumble: React.FC = () => {
   return (
     <div className="w-full h-full flex">
-
-    <WsHandlerProvider>
-      <WaitForLanding>
-        <Join />
-      </WaitForLanding>
-    </WsHandlerProvider>
+      <WsHandlerProvider>
+        <WaitForLanding>
+          <Join />
+        </WaitForLanding>
+      </WsHandlerProvider>
     </div>
   );
 };

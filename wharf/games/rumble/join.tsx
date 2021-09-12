@@ -4,7 +4,6 @@ import { useRumbleStore } from "./use-rumble-store";
 import { secondsLeft } from "./util/time";
 import { me } from "@port7/modules/room/use-room-store";
 import { JoinTable } from "./join-table";
-import { Peer } from "@port7/dock/lib/games/rumble/interfaces";
 
 export const Join = () => {
   const conn = useConn();
@@ -80,31 +79,6 @@ export const Join = () => {
           />
         </div>
       ) : null}
-      {/* {secondsToStart ? (
-        <div className="mb-10 text-primary-100">
-          {`Round will start in ${secondsToStart}s`}
-        </div>
-      ) : null}
-      {Array.from(state.joinedPeers).map(([_key, peer]) => {
-        return (
-          <div className="text-primary-100">{`${peer.nickname} is here`}</div>
-        );
-      })}
-      {!isJoined ? (
-        <button
-          onClick={() => joinButtonClicked()}
-          className="bg-secondary mt-3 text-primary-100 p-3 font-bold rounded-md shadow-md hover:bg-secondary-hover !isJoined);"
-        >
-          JOIN ROUND
-        </button>
-      ) : (
-        <button
-          onClick={() => joinButtonClicked()}
-          className="bg-ternary mt-3 text-primary-100 p-3 font-bold rounded-md shadow-md hover:bg-ternary-hover !isJoined);"
-        >
-          LEAVE ROUND
-        </button>
-      )} */}
     </div>
   );
 };

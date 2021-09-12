@@ -23,7 +23,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ open }) => {
       : "absolute right-0 bottom-0 top-10 w-full";
 
   return (
-    <div className={`w-96 bg-primary-700 flex flex-col ${outerClass} ${!open ? "hidden" : ""}`}>
+    <div
+      className={`w-96 bg-primary-700 flex flex-col ${outerClass} ${
+        !open ? "hidden" : ""
+      }`}
+    >
       <div className="w-full h-12 bg-primary-700 flex-shrink-0 grid grid-cols-3 gap-x-1">
         <ChatPanelIcon
           isSelected={selection === 1}
