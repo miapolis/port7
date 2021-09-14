@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@port7/ui";
-import { useRumbleStore } from "./use-rumble-store";
-import { PlayerSeat } from "./player-seat";
+import { useRumbleStore } from "../../use-rumble-store";
+import { PlayerSeat } from "../../player-seat";
 
 export interface JoinTableProps {
   isJoined: boolean;

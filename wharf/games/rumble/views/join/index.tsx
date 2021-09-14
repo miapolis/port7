@@ -1,10 +1,9 @@
 import React from "react";
 import { useConn } from "@port7/hooks/use-conn";
-import { useRumbleStore } from "./use-rumble-store";
-import { secondsLeft } from "./util/time";
-import { me } from "@port7/modules/room/use-room-store";
+import { useRumbleStore } from "../../use-rumble-store";
+import { secondsLeft } from "../../util/time";
 import { JoinTable } from "./join-table";
-import { iAmJoined } from "./i-am-joined";
+import { iAmJoined } from "../../i-am-joined";
 
 export const Join = () => {
   const conn = useConn();

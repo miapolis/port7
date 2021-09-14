@@ -3,10 +3,12 @@ import { Peer } from "@port7/dock/lib/games/rumble";
 
 interface RumbleState {
   landed: boolean;
+  milestone: string | undefined;
   joinedPeers: Map<number, Peer>;
   serverToLocalNow: number | undefined;
   startTimestamp: number | undefined;
   doLanding: () => void;
+  setMilestone: (milestone: string) => void;
   setServerNow: (serverNow: number) => void;
   setStartTimestamp: (timestamp: number | undefined) => void;
   setJoinedPeers: (peers: Peer[]) => void;
@@ -16,12 +18,18 @@ interface RumbleState {
 
 export const useRumbleStore = create<RumbleState>((set) => ({
   landed: false,
+  milestone: undefined,
   joinedPeers: new Map<number, Peer>(),
   serverToLocalNow: undefined,
   startTimestamp: undefined,
   doLanding: () => {
     set((_state) => ({
       landed: true,
+    }));
+  },
+  setMilestone: (milestone: string) => {
+    set((_state) => ({
+      milestone: milestone
     }));
   },
   setServerNow: (serverNow: number) => {

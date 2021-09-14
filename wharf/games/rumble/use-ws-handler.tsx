@@ -13,6 +13,7 @@ export const useWsHandler = () => {
         const filtered = data.peers.filter((x: any) => x.isJoined === true);
         useRumbleStore.getState().setJoinedPeers(filtered);
 
+        useRumbleStore.getState().setMilestone(data.milestone.state);
         useRumbleStore.getState().setServerNow(data.milestone.serverNow);
         if (data.milestone.startTime) {
           useRumbleStore.getState().setStartTimestamp(data.milestone.startTime);
@@ -39,6 +40,9 @@ export const useWsHandler = () => {
       conn.addListener("cancel_start_round", ({}: any) => {
         useRumbleStore.getState().setStartTimestamp(undefined);
       }),
+      conn.addListener("set_milestone", ({ data }: any) => {
+        useRumbleStore.getState().setMilestone(data.state);
+      })
     ];
 
     return () => {
