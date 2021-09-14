@@ -4,11 +4,14 @@ import { useRumbleStore } from "../../use-rumble-store";
 import { secondsLeft } from "../../util/time";
 import { JoinTable } from "./join-table";
 import { iAmJoined } from "../../i-am-joined";
+import { LobbyMilestone } from "@port7/dock/lib/games/rumble";
 
 export const Join = () => {
   const conn = useConn();
   const state = useRumbleStore();
   const joined = iAmJoined();
+  if (!state.milestone) return null;
+  const milestone = state.milestone as LobbyMilestone;
 
   const joinButtonClicked = async () => {
     if (!joined) {
@@ -40,16 +43,14 @@ export const Join = () => {
 
   React.useEffect(() => {
     if (startTimerInterval) clearInterval(startTimerInterval);
-    if (!state.startTimestamp || !state.serverToLocalNow) {
+    if (!milestone.startTime || !state.serverToLocalNow) {
       setSecondsToStart(undefined);
       return;
     }
 
     const func = () => {
-      if (!state.startTimestamp || !state.serverToLocalNow) return;
-      const seconds = secondsLeft(
-        state.startTimestamp + state.serverToLocalNow
-      );
+      if (!milestone.startTime || !state.serverToLocalNow) return;
+      const seconds = secondsLeft(milestone.startTime + state.serverToLocalNow);
       setSecondsToStart(seconds);
     };
 
@@ -59,7 +60,7 @@ export const Join = () => {
       }, 50)
     );
     func();
-  }, [state.startTimestamp]);
+  }, [milestone.startTime]);
 
   return (
     <div className="flex flex-1 items-center justify-center flex-col">

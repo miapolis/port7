@@ -1,14 +1,13 @@
 import create from "zustand";
-import { Peer } from "@port7/dock/lib/games/rumble";
+import { Milestone, Peer } from "@port7/dock/lib/games/rumble";
 
 interface RumbleState {
   landed: boolean;
-  milestone: string | undefined;
+  milestone: Milestone | undefined;
   joinedPeers: Map<number, Peer>;
   serverToLocalNow: number | undefined;
-  startTimestamp: number | undefined;
   doLanding: () => void;
-  setMilestone: (milestone: string) => void;
+  setMilestone: (milestone: Milestone) => void;
   setServerNow: (serverNow: number) => void;
   setStartTimestamp: (timestamp: number | undefined) => void;
   setJoinedPeers: (peers: Peer[]) => void;
@@ -21,15 +20,14 @@ export const useRumbleStore = create<RumbleState>((set) => ({
   milestone: undefined,
   joinedPeers: new Map<number, Peer>(),
   serverToLocalNow: undefined,
-  startTimestamp: undefined,
   doLanding: () => {
     set((_state) => ({
       landed: true,
     }));
   },
-  setMilestone: (milestone: string) => {
+  setMilestone: (milestone: Milestone) => {
     set((_state) => ({
-      milestone: milestone
+      milestone: milestone,
     }));
   },
   setServerNow: (serverNow: number) => {
@@ -38,9 +36,11 @@ export const useRumbleStore = create<RumbleState>((set) => ({
     }));
   },
   setStartTimestamp: (timestamp: number | undefined) => {
-    set((_state) => ({
-      startTimestamp: timestamp,
-    }));
+    set((state) => {
+      return {
+        milestone: Object.assign(state.milestone, { startTime: timestamp }),
+      };
+    });
   },
   setJoinedPeers: (peers: Peer[]) => {
     set((_state) => {

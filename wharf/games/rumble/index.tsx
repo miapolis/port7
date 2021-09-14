@@ -12,9 +12,9 @@ export const Rumble: React.FC = () => {
     <div className="w-full h-full flex">
       <WsHandlerProvider>
         <WaitForLanding>
-          {milestone === "lobby" ? (
+          {milestone?.state === "lobby" ? (
             <Join />
-          ) : milestone === "game" ? (
+          ) : milestone?.state === "game" ? (
             <Game />
           ) : (
             ""

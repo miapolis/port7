@@ -143,9 +143,9 @@ defmodule Ports.Rumble.Game do
 
     if peers_left < @min_players_for_game and not is_nil(state.milestone.start_timer) do
       cancel_start_timer(state)
-      nil
+      {nil, nil}
     else
-      state.milestone.start_timer
+      {state.milestone.start_timer, state.milestone.start_time}
     end
   end
 
@@ -211,9 +211,13 @@ defmodule Ports.Rumble.Game do
             })
 
             peers = Map.replace!(state.peers, peer_id, %{peer | is_joined: false})
-            start_timer = maybe_cancel_start_timer(state, peers)
+            {start_timer, start_time} = maybe_cancel_start_timer(state, peers)
 
-            %{state | peers: peers, milestone: %{state.milestone | start_timer: start_timer}}
+            %{
+              state
+              | peers: peers,
+                milestone: %{state.milestone | start_timer: start_timer, start_time: start_time}
+            }
           else
             state
           end

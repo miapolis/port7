@@ -1,6 +1,7 @@
 import React from "react";
 import { WebSocketContext } from "@port7/modules/ws/ws-provider";
 import { useRumbleStore } from "./use-rumble-store";
+import { GameMilestone, LobbyMilestone } from "@port7/dock/lib/games/rumble";
 
 export const useWsHandler = () => {
   const { conn } = React.useContext(WebSocketContext);
@@ -12,11 +13,23 @@ export const useWsHandler = () => {
       conn.addListener("landing", ({ data }: any) => {
         const filtered = data.peers.filter((x: any) => x.isJoined === true);
         useRumbleStore.getState().setJoinedPeers(filtered);
-
-        useRumbleStore.getState().setMilestone(data.milestone.state);
         useRumbleStore.getState().setServerNow(data.milestone.serverNow);
-        if (data.milestone.startTime) {
-          useRumbleStore.getState().setStartTimestamp(data.milestone.startTime);
+
+        switch (data.milestone.state) {
+          case "lobby":
+            const lobby: LobbyMilestone = {
+              state: data.milestone.state,
+              startTime: data.milestone.startTime,
+            };
+            useRumbleStore.getState().setMilestone(lobby);
+            break;
+          case "game":
+            const game: GameMilestone = {
+              state: data.milestone,
+              currentTurn: data.milestone.currentTurn,
+            };
+            useRumbleStore.getState().setMilestone(game);
+            break;
         }
 
         useRumbleStore.getState().doLanding();
@@ -42,7 +55,7 @@ export const useWsHandler = () => {
       }),
       conn.addListener("set_milestone", ({ data }: any) => {
         useRumbleStore.getState().setMilestone(data.state);
-      })
+      }),
     ];
 
     return () => {
