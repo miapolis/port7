@@ -1,5 +1,6 @@
 defmodule Harbor do
   use Application
+  alias Vapor.Provider
 
   require Logger
 
@@ -12,6 +13,7 @@ defmodule Harbor do
   @impl true
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
+    load_env()
     intro()
 
     children = [
@@ -45,6 +47,34 @@ defmodule Harbor do
          {:_, Plug.Cowboy.Handler, {Pier, []}}
        ]}
     ]
+  end
+
+  defp load_env() do
+    if not File.exists?("config.yaml") do
+      IO.puts(
+        IO.ANSI.red() <>
+          "ERROR: config.yaml file not present\nPlease create one in the " <>
+          IO.ANSI.bright() <> "harbor" <> IO.ANSI.normal() <> " directory!" <> IO.ANSI.reset()
+      )
+
+      System.stop()
+    end
+
+    providers = [
+      %Provider.File{
+        path: "config.yaml",
+        bindings: [
+          {:rumble_default_start, "rumble.default_start", default: 15, map: &String.to_integer/1}
+        ]
+      }
+    ]
+
+    config = Vapor.load!(providers)
+
+    :ets.new(:config_store, [:named_table, :set, :protected])
+    :ets.insert(:config_store, {:rumble_default_start, config.rumble_default_start})
+
+    nil
   end
 
   @port7 """
@@ -85,7 +115,11 @@ defmodule Harbor do
     config =
       config_opt(:MIX_ENV, Mix.env()) <>
         config_opt(:prune_rooms, @config_prune_rooms) <>
-        config_opt(:user_session_timeout, @config_user_session_timeout)
+        config_opt(:user_session_timeout, @config_user_session_timeout) <>
+        config_opt(
+          :rumble_default_start,
+          elem(Enum.at(:ets.lookup(:config_store, :rumble_default_start), 0), 1)
+        )
 
     IO.puts(
       "\n\n> CONFIG#{config}\n#{IO.ANSI.faint()}>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#{IO.ANSI.reset()}"

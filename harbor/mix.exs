@@ -32,6 +32,7 @@ defmodule Harbor.MixProject do
       {:fsmx, "~> 0.2.0"},
       {:sentry, "~> 8.0"},
       {:hackney, "~> 1.8"},
+      {:vapor, "~> 0.10"},
       # TEST HELPERS
       {:faker, "~> 0.16.0", only: :test},
       {:websockex, "~> 0.4.3", only: :test}

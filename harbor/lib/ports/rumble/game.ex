@@ -20,8 +20,10 @@ defmodule Ports.Rumble.Game do
     defstruct room_id: nil, peers: %{}, milestone: nil
   end
 
-  @start_game_timeout 15000
   @min_players_for_game 2
+  defp start_game_timeout() do
+    elem(Enum.at(:ets.lookup(:config_store, :rumble_default_start), 0), 1) * 1000
+  end
 
   defp via(room_id), do: {:via, Registry, {Anchorage.GameRegistry, room_id}}
 
@@ -120,8 +122,9 @@ defmodule Ports.Rumble.Game do
   defp join_round_impl(_peer_id, state), do: {:noreply, state}
 
   defp begin_start_timer(state) do
+    timeout = start_game_timeout()
     now = Utils.Time.ms_now()
-    then = now + @start_game_timeout
+    then = now + timeout
 
     Anchorage.RoomSession.broadcast_ws(state.room_id, %{
       op: "round_starting",
@@ -131,7 +134,7 @@ defmodule Ports.Rumble.Game do
       }
     })
 
-    ref = Process.send_after(self(), {:start_game}, @start_game_timeout)
+    ref = Process.send_after(self(), {:start_game}, timeout)
     {then, ref}
   end
 
