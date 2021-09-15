@@ -241,12 +241,12 @@ defmodule Ports.Rumble.Game do
 
     case state.milestone.state do
       "lobby" ->
-        start_timer = maybe_cancel_start_timer(state, remaining_peers)
+        {start_timer, start_time} = maybe_cancel_start_timer(state, remaining_peers)
 
         %{
           state
           | peers: remaining_peers,
-            milestone: %{state.milestone | start_timer: start_timer}
+            milestone: %{state.milestone | start_timer: start_timer, start_time: start_time}
         }
 
       "game" ->

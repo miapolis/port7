@@ -1,5 +1,5 @@
 import React from "react";
 
 export const Game = () => {
-  return <div>Game</div>;
+  return <h1 className="text-primary-100">Game</h1>;
 };

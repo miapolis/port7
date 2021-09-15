@@ -17,7 +17,7 @@ export const Rumble: React.FC = () => {
           ) : milestone?.state === "game" ? (
             <Game />
           ) : (
-            ""
+            <div>{milestone?.state.toString()}</div>
           )}
         </WaitForLanding>
       </WsHandlerProvider>

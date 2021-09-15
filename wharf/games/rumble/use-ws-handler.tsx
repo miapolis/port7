@@ -9,29 +9,32 @@ export const useWsHandler = () => {
   React.useEffect(() => {
     if (!conn) return;
 
+    const setMilestone = (milestone: any) => {
+      switch (milestone.state) {
+        case "lobby":
+          const lobby: LobbyMilestone = {
+            state: milestone.state,
+            startTime: milestone.startTime,
+          };
+          useRumbleStore.getState().setMilestone(lobby);
+          break;
+        case "game":
+          const game: GameMilestone = {
+            state: milestone.state,
+            currentTurn: milestone.currentTurn,
+          };
+          useRumbleStore.getState().setMilestone(game);
+          break;
+      }
+    };
+
     const unsubs = [
       conn.addListener("landing", ({ data }: any) => {
         const filtered = data.peers.filter((x: any) => x.isJoined === true);
         useRumbleStore.getState().setJoinedPeers(filtered);
         useRumbleStore.getState().setServerNow(data.milestone.serverNow);
 
-        switch (data.milestone.state) {
-          case "lobby":
-            const lobby: LobbyMilestone = {
-              state: data.milestone.state,
-              startTime: data.milestone.startTime,
-            };
-            useRumbleStore.getState().setMilestone(lobby);
-            break;
-          case "game":
-            const game: GameMilestone = {
-              state: data.milestone,
-              currentTurn: data.milestone.currentTurn,
-            };
-            useRumbleStore.getState().setMilestone(game);
-            break;
-        }
-
+        setMilestone(data.milestone);
         useRumbleStore.getState().doLanding();
       }),
       conn.addListener("peer_joined_round", ({ data }: any) => {
@@ -54,7 +57,7 @@ export const useWsHandler = () => {
         useRumbleStore.getState().setStartTimestamp(undefined);
       }),
       conn.addListener("set_milestone", ({ data }: any) => {
-        useRumbleStore.getState().setMilestone(data.state);
+        setMilestone(data);
       }),
     ];
 
