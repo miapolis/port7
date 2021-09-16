@@ -250,13 +250,16 @@ defmodule Ports.Rumble.Game do
         }
 
       "game" ->
-        if Enum.count(remaining_peers) < @min_players_for_game do
+        if count_joined_peers(remaining_peers) < @min_players_for_game do
           new_state = return_to_lobby(state)
+
+          filtered_peers =
+            :maps.filter(fn id, _ -> Map.has_key?(remaining_peers, id) end, new_state.peers)
 
           %{
             state
             | milestone: new_state.milestone,
-              peers: new_state.peers
+              peers: filtered_peers
           }
         else
           %{state | peers: remaining_peers}

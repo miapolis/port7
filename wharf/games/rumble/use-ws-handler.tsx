@@ -9,13 +9,15 @@ export const useWsHandler = () => {
   React.useEffect(() => {
     if (!conn) return;
 
-    const setMilestone = (milestone: any) => {
+    const setMilestone = (milestone: any, landing = false) => {
       switch (milestone.state) {
         case "lobby":
           const lobby: LobbyMilestone = {
             state: milestone.state,
             startTime: milestone.startTime,
           };
+
+          if (!landing) useRumbleStore.getState().setJoinedPeers([]);
           useRumbleStore.getState().setMilestone(lobby);
           break;
         case "game":
@@ -34,7 +36,7 @@ export const useWsHandler = () => {
         useRumbleStore.getState().setJoinedPeers(filtered);
         useRumbleStore.getState().setServerNow(data.milestone.serverNow);
 
-        setMilestone(data.milestone);
+        setMilestone(data.milestone, true);
         useRumbleStore.getState().doLanding();
       }),
       conn.addListener("peer_joined_round", ({ data }: any) => {
