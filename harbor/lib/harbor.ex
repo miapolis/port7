@@ -14,7 +14,10 @@ defmodule Harbor do
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     load_env()
-    intro()
+
+    if Mix.env() != :test do
+      intro()
+    end
 
     children = [
       Anchorage.Supervisors.UserSession,

@@ -1,4 +1,4 @@
-defmodule PortsTest.Rumble.Game do
+defmodule PortsTest.Rumble.Game.Turn do
   use ExUnit.Case
 
   alias Ports.Rumble.Game

@@ -4,7 +4,7 @@ commands:
 - template:
     source: ./templates/tests/room_ws_op.exs.hbs
     destination: '{{dest}}'
-    overwrite: true
+    overwrite: false
     context:
       outer_mod: '{{project}}'
       def_mod: 'PortsTests . {{project}} . Message . {{module}}'

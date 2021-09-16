@@ -21,9 +21,10 @@ defmodule PierTest.Room.KickTest do
 
       other_ws = WsClientFactory.create_client_for(Factory.user_token())
 
-      %{"myPeerId" => toKickId} = WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
+      %{"myPeerId" => to_kick_id} =
+        WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
 
-      WsClient.send_msg(t.client_ws, "room:kick", %{"id" => toKickId})
+      WsClient.send_msg(t.client_ws, "room:kick", %{"id" => to_kick_id})
 
       WsClient.assert_frame("kicked", %{"type" => "kick"}, other_ws)
     end
@@ -49,6 +50,29 @@ defmodule PierTest.Room.KickTest do
 
       WsClient.refute_frame("remove_peer", other_ws)
       WsClient.refute_frame("kicked", t.client_ws)
+    end
+
+    test "can rejoin after being kicked", t do
+      {room_id, _} = Room.create_and_join(t.client_ws, :rumble)
+
+      other_ws = WsClientFactory.create_client_for(Factory.user_token())
+
+      %{"myPeerId" => to_kick_id} =
+        WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
+
+      WsClient.send_msg(t.client_ws, "room:kick", %{"id" => to_kick_id})
+
+      WsClient.assert_frame("kicked", %{"type" => "kick"}, other_ws)
+
+      ref = WsClient.send_call(other_ws, "room:join", %{"roomId" => room_id})
+
+      WsClient.assert_reply("room:join:reply", ref, %{
+        "name" => "foo",
+        "isPrivate" => false,
+        "myPeerId" => ^to_kick_id,
+        "myRoles" => _roles,
+        "peers" => _peers
+      })
     end
   end
 end
