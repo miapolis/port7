@@ -1,5 +1,6 @@
 import React from "react";
+import { TileContainer } from "./tile-container";
 
 export const Game = () => {
-  return <h1 className="text-primary-100">Game</h1>;
+  return <TileContainer />;
 };

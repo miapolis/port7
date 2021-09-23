@@ -21,7 +21,7 @@ defmodule Anchorage.Chat do
   defp via(user_id), do: {:via, Registry, {Anchorage.RoomChatRegistry, user_id}}
 
   defp cast(user_id, params), do: GenServer.cast(via(user_id), params)
-  defp call(user_id, params), do: GenServer.call(via(user_id), params)
+  # defp call(user_id, params), do: GenServer.call(via(user_id), params)
 
   def start_link_supervised(initial_values) do
     case DynamicSupervisor.start_child(
