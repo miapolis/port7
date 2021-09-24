@@ -7,6 +7,7 @@ defmodule Ports.Rumble.Game do
   alias Harbor.Utils
   alias Ports.Rumble.Peer
   alias Ports.Rumble.Milestone
+  alias Ports.Rumble.Tile
 
   @behaviour BaseGame
 
@@ -173,8 +174,17 @@ defmodule Ports.Rumble.Game do
     })
   end
 
+  @spec intial_tiles() :: %{integer => Tile.t()}
+  defp intial_tiles() do
+    %{
+      0 => %Tile{id: 0, x: 20, y: 20},
+      1 => %Tile{id: 1, x: 300, y: 300},
+      2 => %Tile{id: 2, x: 500, y: 500}
+    }
+  end
+
   def start_game(state) do
-    milestone = %{state.milestone | current_turn: next_turn(state)}
+    milestone = %{state.milestone | current_turn: next_turn(state), tiles: intial_tiles()}
 
     case Fsmx.transition(milestone, "game") do
       {:ok, milestone} ->
