@@ -17,7 +17,8 @@ defmodule PortsTests.Rumble.Message.MoveTile.MoveTileTest do
 
   describe "the websocket rumble:move_tile operation" do
     test "assert reply", t do
-      {room_id, peer_id} = Room.create_in_game_state(t.client_ws, :rumble, 1)
+      {room_id, peer_id, %{1 => other_ws}} = Room.create_in_game_state(t.client_ws, :rumble, 1)
+      IO.inspect(other_ws)
 
       assert(1 == 1)
     end

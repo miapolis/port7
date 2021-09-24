@@ -18,7 +18,7 @@ defmodule PierTest.Helpers.Room do
     {room_id, peer_id}
   end
 
-  @spec create_in_game_state(any, any, integer()) :: {binary(), integer()}
+  @spec create_in_game_state(any, any, integer()) :: {binary(), integer(), %{integer() => any()}}
   def create_in_game_state(ws, game, other_ws_count) do
     %{"id" => room_id} =
       WsClient.do_call(ws, "room:create", %{
@@ -29,10 +29,11 @@ defmodule PierTest.Helpers.Room do
 
     %{"myPeerId" => peer_id} = WsClient.do_call(ws, "room:join", %{"roomId" => room_id})
 
-    Enum.each(1..other_ws_count, fn _ ->
+    other_ws_list = Enum.reduce(1..other_ws_count, %{}, fn id, acc ->
       # TODO: Fix
       other_ws = WsClientFactory.create_client_for("0000000000000000")
       WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
+      Map.put(acc, id, other_ws)
     end)
 
     # TODO: Make behaviour specify this
@@ -44,7 +45,7 @@ defmodule PierTest.Helpers.Room do
 
     room.inner_game.set_state(room_id, state)
 
-    {room_id, peer_id}
+    {room_id, peer_id, other_ws_list}
   end
 
   @spec join_existing(any(), String.t()) :: integer()
