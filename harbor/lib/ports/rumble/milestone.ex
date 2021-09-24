@@ -10,7 +10,7 @@ defmodule Ports.Rumble.Milestone do
         |> Enum.map(fn {key, value} -> {transform_key(key), value} end)
         |> Enum.into(%{})
 
-      Jason.Encode.map(Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn]), opts)
+      Jason.Encode.map(Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles]), opts)
     end
 
     defp transform_key(old_key) do
