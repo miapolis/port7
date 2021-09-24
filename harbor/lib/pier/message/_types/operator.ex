@@ -20,6 +20,7 @@ defenum(
     {Auth.Request, 73},
     # RUMBLE 2xx
     {Rumble.Message.JoinRound, 200},
-    {Rumble.Message.LeaveRound, 201}
+    {Rumble.Message.LeaveRound, 201},
+    {Rumble.Message.MoveTile, 202}
   ]
 )

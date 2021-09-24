@@ -19,7 +19,8 @@ defmodule Pier.Message.Manifest do
     "auth:request" => Auth.Request,
     # RUMBLE
     "rumble:join_round" => Rumble.Message.JoinRound,
-    "rumble:leave_round" => Rumble.Message.LeaveRound
+    "rumble:leave_round" => Rumble.Message.LeaveRound,
+    "rumble:move_tile" => Rumble.Message.MoveTile
   }
 
   @actions

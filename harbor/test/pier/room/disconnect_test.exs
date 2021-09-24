@@ -16,22 +16,6 @@ defmodule PierTest.Room.DisconnectTest do
   end
 
   describe "disconnecting from the room" do
-    # test "can rejoin after disconnecting", t do
-    #   {room_id, _} = Room.create_and_join(t.client_ws, :rumble)
-    #   Process.exit(t.client_ws, :kill)
-
-    #   restarted_ws = WsClientFactory.create_client_for(t.user_id)
-    #   ref = WsClient.send_call(restarted_ws, "room:join", %{"roomId" => room_id})
-
-    #   WsClient.assert_reply("room:join:reply", ref, %{
-    #     "name" => "foo",
-    #     "isPrivate" => false,
-    #     "myPeerId" => 0,
-    #     "myRoles" => _roles,
-    #     "peers" => _peers
-    #   })
-    # end
-
     test "other peer receives leave message", t do
       {room_id, host_id} = Room.create_and_join(t.client_ws, :rumble)
 

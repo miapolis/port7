@@ -229,10 +229,17 @@ defmodule Anchorage.RoomSession do
     {:noreply, %{state | peers: peers}}
   end
 
-  def broadcast_ws(room_id, msg), do: cast(room_id, {:broadcast_ws, msg})
+  def broadcast_ws(room_id, msg, opts \\ nil), do: cast(room_id, {:broadcast_ws, msg, opts})
 
-  defp broadcast_ws_impl(msg, state) do
-    ws_fan(state.peers, msg)
+  defp broadcast_ws_impl(msg, opts, state) do
+    cond do
+      is_nil(opts) ->
+        ws_fan(state.peers, msg)
+
+      not is_nil(opts[:except]) ->
+        ws_fan(:maps.filter(fn _, peer -> peer.id != opts[:except] end, state.peers), msg)
+    end
+
     {:noreply, state}
   end
 
@@ -249,7 +256,7 @@ defmodule Anchorage.RoomSession do
   def handle_cast({:remove_from_room, user_id, action}, state),
     do: remove_from_room_impl(user_id, action, state)
 
-  def handle_cast({:broadcast_ws, msg}, state), do: broadcast_ws_impl(msg, state)
+  def handle_cast({:broadcast_ws, msg, opts}, state), do: broadcast_ws_impl(msg, opts, state)
 
   def handle_cast({:event}, state) do
     {:noreply, %{state | last_event_timestamp: Time.s_now()}}

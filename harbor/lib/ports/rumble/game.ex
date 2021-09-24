@@ -315,6 +315,38 @@ defmodule Ports.Rumble.Game do
     Enum.fetch!(peers, next).id
   end
 
+  def move_tile(room_id, peer_id, tile_id, x, y) do
+    cast(room_id, {:move_tile, peer_id, tile_id, x, y})
+  end
+
+  def move_tile_impl(peer_id, tile_id, x, y, state) do
+    tiles = state.milestone.tiles
+
+    new_state =
+      if Map.has_key?(tiles, tile_id) do
+        Anchorage.RoomSession.broadcast_ws(
+          state.room_id,
+          %{
+            op: "tile_moved",
+            d: %{
+              id: tile_id,
+              x: x,
+              y: y
+            }
+          },
+          except: peer_id
+        )
+
+        new_tiles = Map.replace(tiles, tile_id, %Tile{id: tile_id, x: x, y: y})
+        new_milestone = %{state.milestone | tiles: new_tiles}
+        %{state | milestone: new_milestone}
+      else
+        state
+      end
+
+    {:noreply, new_state}
+  end
+
   defp joined_peers(peers) do
     peers
     |> Map.values()
@@ -374,7 +406,7 @@ defmodule Ports.Rumble.Game do
       op: "landing",
       d: %{
         peers: Map.values(peers),
-        milestone: Map.merge(state.milestone, %{serverNow: Utils.Time.ms_now()})
+        milestone: Map.merge(Milestone.tidy(state.milestone), %{serverNow: Utils.Time.ms_now()})
       }
     })
   end
@@ -410,9 +442,12 @@ defmodule Ports.Rumble.Game do
 
   ### - ROUTER - ######################################################################
 
+  def handle_cast({:set_state, new_state}, _state), do: {:noreply, new_state}
   def handle_cast({:join_round, peer_id}, state), do: join_round_impl(peer_id, state)
   def handle_cast({:leave_round, peer_id}, state), do: leave_round_impl(peer_id, state)
-  def handle_cast({:set_state, new_state}, _state), do: {:noreply, new_state}
+
+  def handle_cast({:move_tile, peer_id, tile_id, x, y}, %{milestone: %{state: "game"}} = state),
+    do: move_tile_impl(peer_id, tile_id, x, y, state)
 
   @impl true
   def handle_call({:get_state}, _reply, state), do: {:reply, state, state}

@@ -10,7 +10,10 @@ defmodule Ports.Rumble.Milestone do
         |> Enum.map(fn {key, value} -> {transform_key(key), value} end)
         |> Enum.into(%{})
 
-      Jason.Encode.map(Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles]), opts)
+      Jason.Encode.map(
+        Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles]),
+        opts
+      )
     end
 
     defp transform_key(old_key) do
@@ -31,6 +34,16 @@ defmodule Ports.Rumble.Milestone do
           current_turn: integer(),
           tiles: %{integer => Tile.t()}
         }
+
+  def tidy(milestone) do
+    case milestone.state do
+      "lobby" ->
+        milestone
+
+      "game" ->
+        %{milestone | tiles: Map.values(milestone.tiles)}
+    end
+  end
 
   use Fsmx.Struct, fsm: __MODULE__.StateMachine
 end

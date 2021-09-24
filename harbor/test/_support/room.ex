@@ -29,12 +29,13 @@ defmodule PierTest.Helpers.Room do
 
     %{"myPeerId" => peer_id} = WsClient.do_call(ws, "room:join", %{"roomId" => room_id})
 
-    other_ws_list = Enum.reduce(1..other_ws_count, %{}, fn id, acc ->
-      # TODO: Fix
-      other_ws = WsClientFactory.create_client_for("0000000000000000")
-      WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
-      Map.put(acc, id, other_ws)
-    end)
+    other_ws_list =
+      Enum.reduce(1..other_ws_count, %{}, fn id, acc ->
+        # TODO: Fix
+        other_ws = WsClientFactory.create_client_for("0000000000000000")
+        WsClient.do_call(other_ws, "room:join", %{"roomId" => room_id})
+        Map.put(acc, id, other_ws)
+      end)
 
     # TODO: Make behaviour specify this
     room = RoomSession.get_state(room_id)
