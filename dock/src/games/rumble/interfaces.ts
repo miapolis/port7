@@ -4,6 +4,12 @@ export interface Peer {
   isDisconnected: boolean;
 }
 
+export interface Tile {
+  id: number;
+  x: number;
+  y: number;
+}
+
 export interface BaseMilestone {
   state: string;
 }
@@ -14,6 +20,7 @@ export interface LobbyMilestone extends BaseMilestone {
 
 export interface GameMilestone extends BaseMilestone {
   currentTurn: number;
+  tiles: Map<number, Tile>;
 }
 
 export type Milestone = LobbyMilestone | GameMilestone;

@@ -1,5 +1,10 @@
 import create from "zustand";
-import { Milestone, Peer } from "@port7/dock/lib/games/rumble";
+import {
+  GameMilestone,
+  Milestone,
+  Peer,
+  Tile,
+} from "@port7/dock/lib/games/rumble";
 
 interface RumbleState {
   landed: boolean;
@@ -62,6 +67,14 @@ export const useRumbleStore = create<RumbleState>((set) => ({
       state.joinedPeers.delete(id);
       return {
         joinedPeers: state.joinedPeers,
+      };
+    });
+  },
+  updateTile: (tile: Tile) => {
+    set((state) => {
+      const milestone = state.milestone as GameMilestone;
+      return {
+        milestone: { ...milestone, tiles: milestone.tiles.set(tile.id, tile) },
       };
     });
   },

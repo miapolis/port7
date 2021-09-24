@@ -1,6 +1,6 @@
 import React from "react";
 import { DraggableCore, DraggableData, DraggableEvent } from "react-draggable";
-import { TileData } from "./tile-container";
+import { Tile as TileData } from "@port7/dock/lib/games/rumble";
 
 export interface TileProps {
   id: number;

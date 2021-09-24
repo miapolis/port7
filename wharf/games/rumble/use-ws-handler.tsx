@@ -1,7 +1,7 @@
 import React from "react";
 import { WebSocketContext } from "@port7/modules/ws/ws-provider";
 import { useRumbleStore } from "./use-rumble-store";
-import { GameMilestone, LobbyMilestone } from "@port7/dock/lib/games/rumble";
+import { GameMilestone, LobbyMilestone, Tile } from "@port7/dock/lib/games/rumble";
 
 export const useWsHandler = () => {
   const { conn } = React.useContext(WebSocketContext);
@@ -24,6 +24,9 @@ export const useWsHandler = () => {
           const game: GameMilestone = {
             state: milestone.state,
             currentTurn: milestone.currentTurn,
+            tiles: new Map(
+              (milestone.tiles as any[]).map((t: any) => [t.id, t])
+            ),
           };
           useRumbleStore.getState().setMilestone(game);
           break;
@@ -60,6 +63,9 @@ export const useWsHandler = () => {
       }),
       conn.addListener("set_milestone", ({ data }: any) => {
         setMilestone(data);
+      }),
+      conn.addListener("tile_moved", ({ data }: any) => {
+        useRumbleStore.getState().updateTile(data as Tile)
       }),
     ];
 
