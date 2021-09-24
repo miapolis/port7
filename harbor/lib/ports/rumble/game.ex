@@ -28,7 +28,7 @@ defmodule Ports.Rumble.Game do
   defp via(room_id), do: {:via, Registry, {Anchorage.GameRegistry, room_id}}
 
   defp cast(room_id, params), do: GenServer.cast(via(room_id), params)
-  defp call(room_id, params), do: GenServer.call(via(room_id), params)
+  # defp call(room_id, params), do: GenServer.call(via(room_id), params)
 
   @impl true
   def start_link_supervised(initial_values) do
@@ -70,14 +70,6 @@ defmodule Ports.Rumble.Game do
          }
        )
      )}
-  end
-
-  def get_state(room_id) do
-    call(room_id, {:get_state})
-  end
-
-  def set_state(room_id, state) do
-    cast(room_id, {:set_state, state})
   end
 
   ### - API - #########################################################################
@@ -184,16 +176,6 @@ defmodule Ports.Rumble.Game do
 
       _ ->
         state
-    end
-  end
-
-  def join_all_peers(state) do
-    if Mix.env() != :test do
-      Logger.error("Function join_all_peers is only available in test mode!")
-      nil
-    else
-      peers = for {id, peer} <- state.peers, into: %{}, do: {id, %{peer | is_joined: true}}
-      %{state | peers: peers}
     end
   end
 
@@ -402,10 +384,6 @@ defmodule Ports.Rumble.Game do
 
   def handle_cast({:join_round, peer_id}, state), do: join_round_impl(peer_id, state)
   def handle_cast({:leave_round, peer_id}, state), do: leave_round_impl(peer_id, state)
-  def handle_cast({:set_state, new_state}, _state), do: {:noreply, new_state}
-
-  @impl true
-  def handle_call({:get_state}, _reply, state), do: {:reply, state, state}
 
   @impl true
   def handle_info(
