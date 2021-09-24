@@ -19,7 +19,7 @@ defmodule PortsTests.Rumble.Message.MoveTile.MoveTileTest do
     test "assert reply", t do
       {room_id, peer_id} = Room.create_in_game_state(t.client_ws, :rumble, 1)
 
-      IO.inspect(Ports.Rumble.Game.get_state(room_id), pretty: true)
+      assert(1 == 1)
     end
   end
 end
