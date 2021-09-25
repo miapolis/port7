@@ -188,7 +188,7 @@ defmodule Ports.Rumble.Game do
 
     case Fsmx.transition(milestone, "game") do
       {:ok, milestone} ->
-        broadcast_milestone(state.room_id, milestone)
+        broadcast_milestone(state.room_id, Milestone.tidy(milestone))
 
         %{state | milestone: milestone}
 
