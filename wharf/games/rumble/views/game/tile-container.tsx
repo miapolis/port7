@@ -1,5 +1,9 @@
 import React from "react";
-import { GameMilestone, Tile as TileData, TileObject } from "@port7/dock/lib/games/rumble";
+import {
+  GameMilestone,
+  Tile as TileData,
+  TileObject,
+} from "@port7/dock/lib/games/rumble";
 import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "../../use-rumble-store";
 import { Tile } from "./tile";
@@ -58,7 +62,7 @@ export const TileContainer: React.FC = () => {
     const current = tiles.get(id);
 
     if (!current) return;
-    // Find available tiles for snapping
+
     const snappable = findSnappable(Array.from(tiles.values()), current);
 
     current.x += deltaX;
@@ -78,7 +82,12 @@ export const TileContainer: React.FC = () => {
     const snappable = findSnappable(Array.from(tiles.values()), current);
 
     if (snappable.length !== 0) {
-      const tile = snappable[0]; // TODO: fix!
+      // Determine which tile we are actually going to snapping to
+      let tile;
+      if (snappable.length === 1) tile = snappable[0];
+      else {
+        tile = closestToCurrent(snappable, current);
+      }
 
       if (tile.snapSide !== undefined) {
         current.isSnapping = true;
@@ -89,10 +98,12 @@ export const TileContainer: React.FC = () => {
           current.lockedX = tile.x - TILE_WIDTH;
         }
         current.lockedY = tile.y;
-        tile.snapSide = undefined;
 
         updateTile(current);
-        updateTile(tile);
+        snappable.forEach((s) => {
+          s.snapSide = undefined;
+          updateTile(s);
+        });
 
         setTimeout(() => {
           current.isSnapping = false;
@@ -104,6 +115,34 @@ export const TileContainer: React.FC = () => {
     trySend(current, true);
     clearLock(current);
     updateTile(current);
+  };
+
+  const closestToCurrent = (tiles: TileObject[], current: TileObject) => {
+    let closestData: { diffX: number; diffY: number; id: number } | undefined =
+      undefined;
+
+    tiles.forEach((tile) => {
+      const diffLeftToRight = Math.abs(
+        tile.x + TILE_WIDTH / 2 - (current.x - TILE_WIDTH / 2)
+      );
+      const diffRightToLeft = Math.abs(
+        tile.x - TILE_WIDTH / 2 - (current.x + TILE_WIDTH / 2)
+      );
+      const diffX = Math.min(diffLeftToRight, diffRightToLeft);
+      const diffY = Math.abs(tile.y - current.y);
+
+      if (!closestData) {
+        closestData = { diffX, diffY, id: tile.id };
+        return;
+      } else if (
+        diffX < closestData.diffX ||
+        (diffX === closestData.diffX && diffY < closestData.diffY)
+      ) {
+        closestData = { diffX, diffY, id: tile.id };
+      }
+    });
+
+    return tiles.find((x) => x.id === closestData?.id) as TileObject;
   };
 
   const clearLock = (tile: TileObject) => {
