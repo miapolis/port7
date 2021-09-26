@@ -15,6 +15,8 @@ export interface TileObject {
   id: number;
   x: number;
   y: number;
+  lockedX: number | undefined;
+  lockedY: number | undefined;
   highlightRight: boolean | undefined;
   isSnapping: boolean;
 }
@@ -32,7 +34,13 @@ export const TileContainer: React.FC = () => {
     new Map(
       Array.from(milestone.tiles.values()).map((t) => [
         t.id,
-        { ...t, highlightRight: undefined, isSnapping: false },
+        {
+          ...t,
+          highlightRight: undefined,
+          isSnapping: false,
+          lockedX: undefined,
+          lockedY: undefined,
+        },
       ])
     )
   );
@@ -92,7 +100,13 @@ export const TileContainer: React.FC = () => {
       new Map(
         Array.from(milestone.tiles.values()).map((t) => [
           t.id,
-          { ...t, highlightRight: undefined, isSnapping: false },
+          {
+            ...t,
+            highlightRight: undefined,
+            isSnapping: false,
+            lockedX: undefined,
+            lockedY: undefined,
+          },
         ])
       )
     );
@@ -113,19 +127,23 @@ export const TileContainer: React.FC = () => {
       // Set x and y to match
       const tile = snappable[0];
       if (tile.snapRight) {
-        if (tile.snap) current.x = tile.tile.x + TILE_WIDTH;
+        if (tile.snap) current.lockedX = tile.tile.x + TILE_WIDTH;
+        else current.lockedX = undefined;
       } else {
-        if (tile.snap) current.x = tile.tile.x - TILE_WIDTH;
+        if (tile.snap) current.lockedX = tile.tile.x - TILE_WIDTH;
+        else current.lockedX = undefined;
       }
 
       if (tile.snap) {
-        current.y = tile.tile.y;
+        current.lockedY = tile.tile.y;
         tile.tile.highlightRight = undefined;
       } else {
-        current.x += deltaX;
-        current.y += deltaY;
+        current.lockedY = undefined;
       }
-      setTiles(tiles.set(tile.tile.id, tile.tile));
+
+      current.x += deltaX;
+      current.y += deltaY;
+      setTiles(tiles.set(tile.tile.id, tile.tile).set(id, current));
     }
 
     setTiles(tiles.set(id, current));
@@ -147,21 +165,34 @@ export const TileContainer: React.FC = () => {
         setTiles(tiles.set(id, current).set(tile.tile.id, tile.tile));
 
         if (tile.snapRight) {
-          current.x = tile.tile.x + TILE_WIDTH;
+          current.lockedX = tile.tile.x + TILE_WIDTH;
         } else {
-          current.x = tile.tile.x - TILE_WIDTH;
+          current.lockedX = tile.tile.x - TILE_WIDTH;
         }
-        current.y = tile.tile.y;
+        current.lockedY = tile.tile.y;
 
         setTiles(tiles.set(id, current));
         trySend(current);
 
+        const currentClone = current;
         setTimeout(() => {
-          current.isSnapping = false;
-          setTiles(tiles.set(id, current));
+          currentClone.isSnapping = false;
+          setTiles(tiles.set(id, currentClone));
         }, SNAP_END_DELAY_MS);
       }
     }
+
+    clearLock(current);
+    setTiles(tiles.set(id, current));
+    useRumbleStore.getState().updateTile(current as TileData);
+  };
+
+  const clearLock = (tile: TileObject) => {
+    if (tile.lockedX) tile.x = tile.lockedX;
+    if (tile.lockedY) tile.y = tile.lockedY;
+    tile.isSnapping = false;
+    tile.lockedX = undefined;
+    tile.lockedY = undefined;
   };
 
   const trySend = (data: any) => {
@@ -173,8 +204,10 @@ export const TileContainer: React.FC = () => {
       );
     }
 
+    const x = data.lockedX ?? data.x;
+    const y = data.lockedY ?? data.y;
     if (canSend) {
-      conn?.sendCast("rumble:move_tile", data);
+      conn?.sendCast("rumble:move_tile", { id: data.id, x, y });
       setCanSend(false);
     }
   };

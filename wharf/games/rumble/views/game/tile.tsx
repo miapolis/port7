@@ -22,7 +22,7 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
           width: "100px",
           height: "130px",
           transition: data.isSnapping ? `all ${SNAP_END_DELAY_MS / 1000}s` : "",
-          transform: `translate(${data.x}px, ${data.y}px)`,
+          transform: `translate(${data.lockedX ?? data.x}px, ${data.lockedY ?? data.y}px)`,
         }}
       >
         <div className="relative w-full h-full">
