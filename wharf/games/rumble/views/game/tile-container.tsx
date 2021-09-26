@@ -172,7 +172,6 @@ export const TileContainer: React.FC = () => {
         current.lockedY = tile.tile.y;
 
         setTiles(tiles.set(id, current));
-        trySend(current);
 
         const currentClone = current;
         setTimeout(() => {
@@ -182,6 +181,7 @@ export const TileContainer: React.FC = () => {
       }
     }
 
+    trySend(current, true);
     clearLock(current);
     setTiles(tiles.set(id, current));
     useRumbleStore.getState().updateTile(current as TileData);
@@ -195,7 +195,7 @@ export const TileContainer: React.FC = () => {
     tile.lockedY = undefined;
   };
 
-  const trySend = (data: any) => {
+  const trySend = (data: any, force = false) => {
     if (!sendInterval) {
       setSendInterval(
         setInterval(() => {
@@ -206,7 +206,7 @@ export const TileContainer: React.FC = () => {
 
     const x = data.lockedX ?? data.x;
     const y = data.lockedY ?? data.y;
-    if (canSend) {
+    if (canSend || force) {
       conn?.sendCast("rumble:move_tile", { id: data.id, x, y });
       setCanSend(false);
     }

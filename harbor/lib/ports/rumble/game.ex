@@ -179,7 +179,10 @@ defmodule Ports.Rumble.Game do
     %{
       0 => %Tile{id: 0, x: 20, y: 20},
       1 => %Tile{id: 1, x: 300, y: 300},
-      2 => %Tile{id: 2, x: 500, y: 500}
+      2 => %Tile{id: 2, x: 500, y: 500},
+      3 => %Tile{id: 3, x: 20, y: 300},
+      4 => %Tile{id: 4, x: 100, y: 100},
+      5 => %Tile{id: 5, x: 100, y: 500},
     }
   end
 
