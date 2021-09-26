@@ -36,6 +36,7 @@ export const useWsHandler = () => {
                   lockedX: undefined,
                   lockedY: undefined,
                   snapSide: undefined,
+                  isDragging: false,
                   isSnapping: false,
                 },
               ])

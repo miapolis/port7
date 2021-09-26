@@ -65,6 +65,7 @@ export const TileContainer: React.FC = () => {
 
     const snappable = findSnappable(Array.from(tiles.values()), current);
 
+    current.isDragging = true;
     current.x += deltaX;
     current.y += deltaY;
 
@@ -150,6 +151,7 @@ export const TileContainer: React.FC = () => {
     if (tile.lockedY) tile.y = tile.lockedY;
     tile.lockedX = undefined;
     tile.lockedY = undefined;
+    tile.isDragging = false;
   };
 
   const trySend = (data: any, force = false) => {

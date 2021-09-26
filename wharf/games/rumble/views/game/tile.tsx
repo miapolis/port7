@@ -11,6 +11,7 @@ export interface TileProps {
 }
 
 export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
+  const [hovered, setHovered] = React.useState(false);
   const onDragThis = (e: DraggableEvent, data: DraggableData) => {
     onDrag({ id: id, deltaX: data.deltaX, deltaY: data.deltaY });
   };
@@ -18,15 +19,22 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
   return (
     <DraggableCore onDrag={onDragThis} onStop={() => onDragStop(id)}>
       <div
-        className="rounded-lg bg-primary-600 absolute cursor-move"
+        className={`rounded-lg bg-primary-600 absolute cursor-move shadow-lg ${
+          data.isDragging ? "z-10" : ""
+        }`}
         style={{
           width: "100px",
           height: "130px",
-          transition: data.isSnapping ? `transform ${SNAP_END_DELAY_MS / 1000}s` : "",
+          background: hovered ? "#3a4659ff" : "",
+          transition: data.isSnapping
+            ? `background 0.3s, transform ${SNAP_END_DELAY_MS / 1000}s`
+            : "background 0.3s",
           transform: `translate(${data.lockedX ?? data.x}px, ${
             data.lockedY ?? data.y
           }px)`,
         }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
         <div className="relative w-full h-full">
           {data.snapSide === 1 ? (

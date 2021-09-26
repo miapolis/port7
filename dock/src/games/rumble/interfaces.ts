@@ -17,6 +17,7 @@ export interface TileObject {
   lockedX: number | undefined;
   lockedY: number | undefined;
   snapSide: 0 | 1 | undefined;
+  isDragging: boolean;
   isSnapping: boolean;
 }
 
