@@ -4,6 +4,7 @@ import {
   Milestone,
   Peer,
   Tile,
+  TileObject,
 } from "@port7/dock/lib/games/rumble";
 
 interface RumbleState {
@@ -70,7 +71,7 @@ export const useRumbleStore = create<RumbleState>((set) => ({
       };
     });
   },
-  updateTile: (tile: Tile) => {
+  updateTile: (tile: TileObject) => {
     set((state) => {
       const milestone = state.milestone as GameMilestone;
       return {

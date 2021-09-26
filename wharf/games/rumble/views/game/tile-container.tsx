@@ -1,116 +1,57 @@
 import React from "react";
-import { GameMilestone, Tile as TileData } from "@port7/dock/lib/games/rumble";
+import { GameMilestone, Tile as TileData, TileObject } from "@port7/dock/lib/games/rumble";
 import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "../../use-rumble-store";
 import { Tile } from "./tile";
 
 const TILE_WIDTH = 100;
-const TILE_HEIGHT = 130;
-const SNAP_NEAR = 12;
-const SNAP_INDICATOR_NEAR = 60;
-const SNAP_INDICATOR_NEAR_Y = 120;
-export const SNAP_END_DELAY_MS = 50;
-
-export interface TileObject {
-  id: number;
-  x: number;
-  y: number;
-  lockedX: number | undefined;
-  lockedY: number | undefined;
-  highlightRight: boolean | undefined;
-  isSnapping: boolean;
-}
+const SNAP_NEAR = 60;
+const SNAP_NEAR_Y = 120;
+export const SNAP_END_DELAY_MS = 100;
 
 export const TileContainer: React.FC = () => {
   const conn = useConn();
   const state = useRumbleStore();
+  const updateTile = state.updateTile;
   const milestone = state.milestone as GameMilestone;
+  const tiles = milestone.tiles;
   const [sendInterval, setSendInterval] = React.useState<
     NodeJS.Timeout | undefined
   >(undefined);
 
   const [canSend, setCanSend] = React.useState(true);
-  const [tiles, setTiles] = React.useState<Map<number, TileObject>>(
-    new Map(
-      Array.from(milestone.tiles.values()).map((t) => [
-        t.id,
-        {
-          ...t,
-          highlightRight: undefined,
-          isSnapping: false,
-          lockedX: undefined,
-          lockedY: undefined,
-        },
-      ])
-    )
-  );
 
   const findSnappable = (allTiles: TileObject[], current: TileObject) => {
-    const snappable = new Array<{
-      tile: TileObject;
-      snapRight: boolean;
-      snap: boolean;
-    }>();
-    allTiles.forEach((tile) => {
-      let xSnapRight = false,
-        xSnapLeft = false;
-      let doSnap = false;
-      // Determine if the distance is close enough
+    const result: TileObject[] = [];
+
+    Array.from(allTiles).forEach((tile) => {
+      let snapSide: 0 | 1 | undefined = undefined;
       const rightOfTile = tile.x + TILE_WIDTH / 2;
       const leftOfCurrent = current.x - TILE_WIDTH / 2;
 
-      if (Math.abs(rightOfTile - leftOfCurrent) < SNAP_INDICATOR_NEAR) {
-        xSnapRight = true;
-        if (Math.abs(rightOfTile - leftOfCurrent) < SNAP_NEAR) {
-          doSnap = true;
-        }
+      if (Math.abs(rightOfTile - leftOfCurrent) < SNAP_NEAR) {
+        snapSide = 1;
       } else {
         const leftOfTile = tile.x - TILE_WIDTH / 2;
         const rightOfCurrent = current.x + TILE_WIDTH / 2;
-        if (Math.abs(leftOfTile - rightOfCurrent) < SNAP_INDICATOR_NEAR) {
-          xSnapLeft = true;
-          if (Math.abs(leftOfTile - rightOfCurrent) < SNAP_NEAR) {
-            doSnap = true;
-          }
+
+        if (Math.abs(leftOfTile - rightOfCurrent) < SNAP_NEAR) {
+          snapSide = 0;
         }
       }
 
       if (
-        (xSnapRight || xSnapLeft) &&
-        Math.abs(tile.y - current.y) < SNAP_INDICATOR_NEAR_Y
+        snapSide !== undefined &&
+        Math.abs(tile.y - current.y) < SNAP_NEAR_Y
       ) {
-        snappable.push({
-          tile: { ...tile, highlightRight: xSnapRight },
-          snapRight: xSnapRight,
-          snap: doSnap,
-        });
-      } else if (tile.highlightRight !== undefined) {
-        snappable.push({
-          tile: { ...tile, highlightRight: undefined },
-          snapRight: xSnapRight,
-          snap: false,
-        });
+        result.push({ ...tile, snapSide });
+      } else if (tile.snapSide !== undefined) {
+        result.push({ ...tile, snapSide: undefined });
       }
     });
-    return snappable;
-  };
 
-  React.useEffect(() => {
-    setTiles(
-      new Map(
-        Array.from(milestone.tiles.values()).map((t) => [
-          t.id,
-          {
-            ...t,
-            highlightRight: undefined,
-            isSnapping: false,
-            lockedX: undefined,
-            lockedY: undefined,
-          },
-        ])
-      )
-    );
-  }, [milestone]);
+    return result;
+  };
 
   const onDrag = (event: any) => {
     const { id, deltaX, deltaY } = event;
@@ -120,33 +61,14 @@ export const TileContainer: React.FC = () => {
     // Find available tiles for snapping
     const snappable = findSnappable(Array.from(tiles.values()), current);
 
-    if (snappable.length === 0) {
-      current.x += deltaX;
-      current.y += deltaY;
-    } else {
-      // Set x and y to match
-      const tile = snappable[0];
-      if (tile.snapRight) {
-        if (tile.snap) current.lockedX = tile.tile.x + TILE_WIDTH;
-        else current.lockedX = undefined;
-      } else {
-        if (tile.snap) current.lockedX = tile.tile.x - TILE_WIDTH;
-        else current.lockedX = undefined;
-      }
+    current.x += deltaX;
+    current.y += deltaY;
 
-      if (tile.snap) {
-        current.lockedY = tile.tile.y;
-        tile.tile.highlightRight = undefined;
-      } else {
-        current.lockedY = undefined;
-      }
+    snappable.forEach((tile) => {
+      updateTile(tile);
+    });
+    updateTile(current);
 
-      current.x += deltaX;
-      current.y += deltaY;
-      setTiles(tiles.set(tile.tile.id, tile.tile).set(id, current));
-    }
-
-    setTiles(tiles.set(id, current));
     trySend(current);
   };
 
@@ -156,41 +78,37 @@ export const TileContainer: React.FC = () => {
     const snappable = findSnappable(Array.from(tiles.values()), current);
 
     if (snappable.length !== 0) {
-      const tile = snappable[0];
-      // Snap to highlighted tiles
-      if (tile.tile.highlightRight !== undefined) {
+      const tile = snappable[0]; // TODO: fix!
+
+      if (tile.snapSide !== undefined) {
         current.isSnapping = true;
-        tile.tile.highlightRight = undefined;
 
-        setTiles(tiles.set(id, current).set(tile.tile.id, tile.tile));
-
-        if (tile.snapRight) {
-          current.lockedX = tile.tile.x + TILE_WIDTH;
+        if (tile.snapSide === 1) {
+          current.lockedX = tile.x + TILE_WIDTH;
         } else {
-          current.lockedX = tile.tile.x - TILE_WIDTH;
+          current.lockedX = tile.x - TILE_WIDTH;
         }
-        current.lockedY = tile.tile.y;
+        current.lockedY = tile.y;
+        tile.snapSide = undefined;
 
-        setTiles(tiles.set(id, current));
+        updateTile(current);
+        updateTile(tile);
 
-        const currentClone = current;
         setTimeout(() => {
-          currentClone.isSnapping = false;
-          setTiles(tiles.set(id, currentClone));
+          current.isSnapping = false;
+          updateTile(current);
         }, SNAP_END_DELAY_MS);
       }
     }
 
     trySend(current, true);
     clearLock(current);
-    setTiles(tiles.set(id, current));
-    useRumbleStore.getState().updateTile(current as TileData);
+    updateTile(current);
   };
 
   const clearLock = (tile: TileObject) => {
     if (tile.lockedX) tile.x = tile.lockedX;
     if (tile.lockedY) tile.y = tile.lockedY;
-    tile.isSnapping = false;
     tile.lockedX = undefined;
     tile.lockedY = undefined;
   };
