@@ -2,6 +2,7 @@ import React from "react";
 import { TileObject } from "@port7/dock/lib/games/rumble";
 import { DraggableCore, DraggableData, DraggableEvent } from "react-draggable";
 import { SNAP_END_DELAY_MS } from "./tile-container";
+import { rumbleDebugTiles } from "@port7/lib/constants";
 
 export interface TileProps {
   id: number;
@@ -47,6 +48,13 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
               className="absolute h-full w-1 bg-secondary ring-2"
               style={{ left: "-4px", borderRadius: "4px" }}
             />
+          ) : (
+            ""
+          )}
+          {rumbleDebugTiles ? (
+            <div className="absolute top-2 left-2 text-primary-100">
+              {data.id}
+            </div>
           ) : (
             ""
           )}
