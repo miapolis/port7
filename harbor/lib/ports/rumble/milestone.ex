@@ -1,5 +1,6 @@
 defmodule Ports.Rumble.Milestone do
   alias Ports.Rumble.Tile
+  alias Ports.Rumble.Group
 
   defimpl Jason.Encoder, for: __MODULE__ do
     def encode(value, opts) do
@@ -25,14 +26,15 @@ defmodule Ports.Rumble.Milestone do
     end
   end
 
-  defstruct state: nil, start_time: nil, start_timer: nil, current_turn: nil, tiles: nil
+  defstruct state: nil, start_time: nil, start_timer: nil, current_turn: nil, tiles: nil, groups: nil
 
   @type t :: %__MODULE__{
           state: binary(),
           start_time: number(),
           start_timer: any(),
           current_turn: integer(),
-          tiles: %{integer => Tile.t()}
+          tiles: %{integer => Tile.t()},
+          groups: %{integer => Group.t()},
         }
 
   def tidy(milestone) do
@@ -41,7 +43,7 @@ defmodule Ports.Rumble.Milestone do
         milestone
 
       "game" ->
-        %{milestone | tiles: Map.values(milestone.tiles)}
+        %{milestone | tiles: Map.values(milestone.tiles), groups: Map.values(milestone.groups)}
     end
   end
 

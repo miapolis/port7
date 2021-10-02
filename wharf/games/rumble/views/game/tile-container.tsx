@@ -91,9 +91,10 @@ export const TileContainer: React.FC = () => {
       }
 
       if (tile.snapSide !== undefined) {
+        const snapSide = tile.snapSide;
         current.isSnapping = true;
 
-        if (tile.snapSide === 1) {
+        if (snapSide === 1) {
           current.lockedX = tile.x + TILE_WIDTH;
         } else {
           current.lockedX = tile.x - TILE_WIDTH;
@@ -106,14 +107,18 @@ export const TileContainer: React.FC = () => {
           updateTile(s);
         });
 
+        sendSnap(current, tile.id, snapSide);
+
         setTimeout(() => {
           current.isSnapping = false;
           updateTile(current);
         }, SNAP_END_DELAY_MS);
       }
+    } else {
+      // Force the sending of the final move
+      trySend(current, true);
     }
 
-    trySend(current, true);
     clearLock(current);
     updateTile(current);
   };
@@ -169,6 +174,16 @@ export const TileContainer: React.FC = () => {
       conn?.sendCast("rumble:move_tile", { id: data.id, x, y });
       setCanSend(false);
     }
+  };
+
+  const sendSnap = (tile: TileObject, snapId: number, snapSide: number) => {
+    conn?.sendCast("rumble:move_tile", {
+      id: tile.id,
+      x: tile.x,
+      y: tile.y,
+      snapTo: snapId,
+      snapSide,
+    });
   };
 
   return (

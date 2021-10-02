@@ -5,6 +5,7 @@ import {
   GameMilestone,
   LobbyMilestone,
   Tile,
+  TileObject,
 } from "@port7/dock/lib/games/rumble";
 
 export const useWsHandler = () => {
@@ -80,6 +81,26 @@ export const useWsHandler = () => {
       }),
       conn.addListener("tile_moved", ({ data }: any) => {
         useRumbleStore.getState().updateTile(data as Tile);
+      }),
+      conn.addListener("tile_snapped", ({ data }: any) => {
+        const tiles = (useRumbleStore.getState().milestone as GameMilestone)
+          .tiles;
+        const current = tiles.get(data.id) as TileObject;
+        const snapToTile = tiles.get(data.snapTo) as TileObject;
+        const updated = {
+          ...current,
+          x: data.snapSide == 1 ? snapToTile.x + 100 : snapToTile.x - 100,
+          y: snapToTile.y,
+          isSnapping: true,
+        };
+
+        useRumbleStore.getState().updateTile(updated);
+
+        setTimeout(() => {
+          useRumbleStore
+            .getState()
+            .updateTile({ ...updated, isSnapping: false });
+        }, 100);
       }),
     ];
 

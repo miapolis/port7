@@ -19,6 +19,7 @@ interface RumbleState {
   setJoinedPeers: (peers: Peer[]) => void;
   addJoinedPeer: (id: number, nickname: string) => void;
   removeJoinedPeer: (id: number) => void;
+  updateTile: (tile: any) => void;
 }
 
 export const useRumbleStore = create<RumbleState>((set) => ({
@@ -71,7 +72,7 @@ export const useRumbleStore = create<RumbleState>((set) => ({
       };
     });
   },
-  updateTile: (tile: TileObject) => {
+  updateTile: (tile: any) => {
     set((state) => {
       const milestone = state.milestone as GameMilestone;
       return {

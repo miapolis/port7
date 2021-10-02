@@ -5,11 +5,14 @@ defmodule Ports.Rumble.Game do
   require Logger
 
   alias Harbor.Utils
+  alias Harbor.Utils.SimpleId
   alias Ports.Rumble.Peer
   alias Ports.Rumble.Milestone
   alias Ports.Rumble.Tile
+  alias Ports.Rumble.Group
 
   @behaviour BaseGame
+  @tile_width 100
 
   defmodule State do
     @type t :: %__MODULE__{
@@ -174,20 +177,24 @@ defmodule Ports.Rumble.Game do
     })
   end
 
-  @spec intial_tiles() :: %{integer => Tile.t()}
   defp intial_tiles() do
     %{
-      0 => %Tile{id: 0, x: 20, y: 20},
-      1 => %Tile{id: 1, x: 300, y: 300},
-      2 => %Tile{id: 2, x: 500, y: 500},
-      3 => %Tile{id: 3, x: 20, y: 300},
-      4 => %Tile{id: 4, x: 100, y: 100},
-      5 => %Tile{id: 5, x: 100, y: 500},
+      0 => %Tile{id: 0, x: 20, y: 20, group_id: nil, group_index: nil},
+      1 => %Tile{id: 1, x: 300, y: 300, group_id: nil, group_index: nil},
+      2 => %Tile{id: 2, x: 500, y: 500, group_id: nil, group_index: nil},
+      3 => %Tile{id: 3, x: 20, y: 300, group_id: nil, group_index: nil},
+      4 => %Tile{id: 4, x: 100, y: 100, group_id: nil, group_index: nil},
+      5 => %Tile{id: 5, x: 100, y: 500, group_id: nil, group_index: nil}
     }
   end
 
   def start_game(state) do
-    milestone = %{state.milestone | current_turn: next_turn(state), tiles: intial_tiles()}
+    milestone = %{
+      state.milestone
+      | current_turn: next_turn(state),
+        tiles: intial_tiles(),
+        groups: %{}
+    }
 
     case Fsmx.transition(milestone, "game") do
       {:ok, milestone} ->
@@ -322,11 +329,13 @@ defmodule Ports.Rumble.Game do
     cast(room_id, {:move_tile, peer_id, tile_id, x, y})
   end
 
-  def move_tile_impl(peer_id, tile_id, x, y, state) do
+  defp move_tile_impl(peer_id, tile_id, x, y, state) do
     tiles = state.milestone.tiles
 
     new_state =
       if Map.has_key?(tiles, tile_id) do
+        tile = Map.get(tiles, tile_id)
+
         Anchorage.RoomSession.broadcast_ws(
           state.room_id,
           %{
@@ -340,7 +349,7 @@ defmodule Ports.Rumble.Game do
           except: peer_id
         )
 
-        new_tiles = Map.replace(tiles, tile_id, %Tile{id: tile_id, x: x, y: y})
+        new_tiles = Map.replace(tiles, tile_id, %Tile{tile | x: x, y: y})
         new_milestone = %{state.milestone | tiles: new_tiles}
         %{state | milestone: new_milestone}
       else
@@ -348,6 +357,133 @@ defmodule Ports.Rumble.Game do
       end
 
     {:noreply, new_state}
+  end
+
+  def snap_to(room_id, peer_id, tile_id, snap_to, snap_side) do
+    cast(room_id, {:snap_to, peer_id, tile_id, snap_to, snap_side})
+  end
+
+  def snap_to_impl(peer_id, tile_id, snap_to, snap_side, state) do
+    tiles = state.milestone.tiles
+    groups = state.milestone.groups
+
+    new_state =
+      if Map.has_key?(tiles, tile_id) and Map.has_key?(tiles, snap_to) do
+        tile = Map.get(tiles, tile_id)
+        snap_tile = Map.get(tiles, snap_to)
+
+        if not is_nil(snap_tile.group_id) do
+          group = Map.get(groups, snap_tile.group_id)
+
+          index =
+            if snap_side == 0 do
+              snap_tile.group_index
+            else
+              snap_tile.group_index + 1
+            end
+
+          # Unless it was snapped to the right most slot,
+          # other tiles need to be moved over an index
+          total_indeces =
+            unless index == Enum.count(group.children) do
+              right_of_snap = :maps.filter(fn i, _id -> i >= index end, group.children)
+
+              right_of_snap
+              |> Enum.map(fn {key, val} -> {key + 1, val} end)
+              |> Enum.into(group.children)
+              |> Map.put(index, tile_id)
+            else
+              Map.put(group.children, index, tile_id)
+            end
+
+          updated_tile =
+            %{tile | group_index: index, group_id: group.id}
+            |> change_pos_to_snap(snap_tile, snap_side)
+
+          updated_group = %{group | children: total_indeces}
+
+          Anchorage.RoomSession.broadcast_ws(
+            state.room_id,
+            %{
+              op: "tile_snapped",
+              d: %{
+                id: tile_id,
+                snapTo: snap_to,
+                snapSide: snap_side,
+                group: updated_group
+              }
+            },
+            except: peer_id
+          )
+
+          all_tiles = Map.put(tiles, tile_id, updated_tile)
+          all_groups = Map.put(groups, group.id, updated_group)
+
+          IO.inspect(Map.values(all_groups))
+          IO.inspect(Map.values(all_tiles))
+
+          milestone = %{state.milestone | groups: all_groups, tiles: all_tiles}
+          %{state | milestone: milestone}
+        else
+          # Create a new group for the two tiles
+          group_id = SimpleId.gen(groups)
+
+          updated_current_tile =
+            %{tile | group_id: group_id, group_index: snap_side}
+            |> change_pos_to_snap(snap_tile, snap_side)
+
+          updated_snap_to_tile = %{snap_tile | group_id: group_id, group_index: 1 - snap_side}
+
+          group =
+            create_group(group_id, %{
+              snap_side => tile_id,
+              (1 - snap_side) => snap_to
+            })
+
+          Anchorage.RoomSession.broadcast_ws(
+            state.room_id,
+            %{
+              op: "tile_snapped",
+              d: %{
+                id: tile_id,
+                snapTo: snap_to,
+                snapSide: snap_side,
+                group: group
+              }
+            },
+            except: peer_id
+          )
+
+          all_tiles =
+            tiles
+            |> Map.put(tile_id, updated_current_tile)
+            |> Map.put(snap_to, updated_snap_to_tile)
+
+          all_groups = Map.put(groups, group_id, group)
+
+          IO.inspect(Map.values(all_groups))
+          IO.inspect(Map.values(all_tiles))
+
+          milestone = %{state.milestone | groups: all_groups, tiles: all_tiles}
+          %{state | milestone: milestone}
+        end
+      end
+
+    {:noreply, new_state}
+  end
+
+  defp change_pos_to_snap(current, snap_to, snap_side) do
+    x = if snap_side == 1, do: snap_to.x + @tile_width, else: snap_to.x - @tile_width
+    y = snap_to.y
+    %{current | x: x, y: y}
+  end
+
+  defp create_group(id, children) do
+    %Group{
+      id: id,
+      children: children,
+      group_type: :set
+    }
   end
 
   defp joined_peers(peers) do
@@ -451,6 +587,12 @@ defmodule Ports.Rumble.Game do
 
   def handle_cast({:move_tile, peer_id, tile_id, x, y}, %{milestone: %{state: "game"}} = state),
     do: move_tile_impl(peer_id, tile_id, x, y, state)
+
+  def handle_cast(
+        {:snap_to, peer_id, tile_id, snap_to, snap_side},
+        %{milestone: %{state: "game"}} = state
+      ),
+      do: snap_to_impl(peer_id, tile_id, snap_to, snap_side, state)
 
   @impl true
   def handle_call({:get_state}, _reply, state), do: {:reply, state, state}
