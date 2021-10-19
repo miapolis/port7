@@ -6,6 +6,7 @@ import {
   LobbyMilestone,
   Tile,
   TileObject,
+  Group,
 } from "@port7/dock/lib/games/rumble";
 
 export const useWsHandler = () => {
@@ -30,10 +31,14 @@ export const useWsHandler = () => {
             state: milestone.state,
             currentTurn: milestone.currentTurn,
             tiles: new Map(
-              (milestone.tiles as any[]).map((t: any) => [
+              (milestone.tiles as TileObject[]).map((t) => [
                 t.id,
                 {
-                  ...t,
+                  id: t.id,
+                  x: t.x,
+                  y: t.y,
+                  groupId: t.groupId,
+                  groupIndex: t.groupIndex,
                   lockedX: undefined,
                   lockedY: undefined,
                   snapSide: undefined,
@@ -41,6 +46,9 @@ export const useWsHandler = () => {
                   isSnapping: false,
                 },
               ])
+            ),
+            groups: new Map(
+              (milestone.groups as Group[]).map((g) => [g.id, g])
             ),
           };
           useRumbleStore.getState().setMilestone(game);
@@ -83,10 +91,25 @@ export const useWsHandler = () => {
         useRumbleStore.getState().updateTile(data as Tile);
       }),
       conn.addListener("tile_snapped", ({ data }: any) => {
-        const tiles = (useRumbleStore.getState().milestone as GameMilestone)
-          .tiles;
+        const milestone = useRumbleStore.getState().milestone as GameMilestone;
+        const tiles = milestone.tiles;
+
         const current = tiles.get(data.id) as TileObject;
         const snapToTile = tiles.get(data.snapTo) as TileObject;
+        const group = data.group as Group;
+
+        new Map(Object.entries(group.children)).forEach((id, index: any) => {
+          const found = tiles.get(id) as TileObject;
+          found.groupId = group.id;
+          found.groupIndex = index;
+          useRumbleStore.getState().updateTile(found);
+        });
+
+        useRumbleStore.getState().updateGroup({
+          ...group,
+          children: new Map(Object.entries(group.children)) as any,
+        });
+
         const updated = {
           ...current,
           x: data.snapSide == 1 ? snapToTile.x + 100 : snapToTile.x - 100,
@@ -101,6 +124,41 @@ export const useWsHandler = () => {
             .getState()
             .updateTile({ ...updated, isSnapping: false });
         }, 100);
+      }),
+      conn.addListener("delete_group", ({ data }: any) => {
+        const milestone = useRumbleStore.getState().milestone as GameMilestone;
+        const group = milestone.groups.get(data.id) as Group;
+
+        new Map(Object.entries(group.children)).forEach((id) => {
+          const tile = milestone.tiles.get(id) as TileObject;
+          useRumbleStore
+            .getState()
+            .updateTile({ ...tile, groupId: null, groupIndex: null });
+        });
+
+        useRumbleStore.getState().deleteGroup(data.id);
+      }),
+      conn.addListener("update_group", ({ data }: any) => {
+        const milestone = useRumbleStore.getState().milestone as GameMilestone;
+        const group = data.group;
+
+        new Map(Object.entries(group.children)).forEach(
+          (id: any, index: any) => {
+            const tile = milestone.tiles.get(id) as TileObject;
+            useRumbleStore
+              .getState()
+              .updateTile({ ...tile, groupId: group.id, groupIndex: index });
+          }
+        );
+
+        if (data.remove) {
+          const tile = milestone.tiles.get(data.remove);
+          useRumbleStore
+            .getState()
+            .updateTile({ ...tile, groupId: null, groupIndex: null });
+        }
+
+        useRumbleStore.getState().deleteGroup(data.id);
       }),
     ];
 

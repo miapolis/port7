@@ -12,7 +12,6 @@ defmodule Ports.Rumble.Game do
   alias Ports.Rumble.Group
 
   @behaviour BaseGame
-  @tile_width 100
 
   defmodule State do
     @type t :: %__MODULE__{
@@ -179,12 +178,12 @@ defmodule Ports.Rumble.Game do
 
   defp intial_tiles() do
     %{
-      0 => %Tile{id: 0, x: 20, y: 20, group_id: nil, group_index: nil},
-      1 => %Tile{id: 1, x: 300, y: 300, group_id: nil, group_index: nil},
-      2 => %Tile{id: 2, x: 500, y: 500, group_id: nil, group_index: nil},
-      3 => %Tile{id: 3, x: 20, y: 300, group_id: nil, group_index: nil},
-      4 => %Tile{id: 4, x: 100, y: 100, group_id: nil, group_index: nil},
-      5 => %Tile{id: 5, x: 100, y: 500, group_id: nil, group_index: nil}
+      0 => %Tile{id: 0, x: 20, y: 20, group_id: nil},
+      1 => %Tile{id: 1, x: 300, y: 300, group_id: nil},
+      2 => %Tile{id: 2, x: 500, y: 500, group_id: nil},
+      3 => %Tile{id: 3, x: 20, y: 300, group_id: nil},
+      4 => %Tile{id: 4, x: 100, y: 100, group_id: nil},
+      5 => %Tile{id: 5, x: 100, y: 500, group_id: nil}
     }
   end
 
@@ -331,159 +330,260 @@ defmodule Ports.Rumble.Game do
 
   defp move_tile_impl(peer_id, tile_id, x, y, state) do
     tiles = state.milestone.tiles
+    groups = state.milestone.groups
 
-    new_state =
-      if Map.has_key?(tiles, tile_id) do
-        tile = Map.get(tiles, tile_id)
+    # new_state =
+    #   if Map.has_key?(tiles, tile_id) do
+    #     tile = Map.get(tiles, tile_id)
 
-        Anchorage.RoomSession.broadcast_ws(
-          state.room_id,
-          %{
-            op: "tile_moved",
-            d: %{
-              id: tile_id,
-              x: x,
-              y: y
-            }
-          },
-          except: peer_id
-        )
+    #     new_state =
+    #       unless is_nil(tile.group_id) or is_nil(tile.group_index) do
+    #         group = Map.get(groups, tile.group_id)
 
-        new_tiles = Map.replace(tiles, tile_id, %Tile{tile | x: x, y: y})
-        new_milestone = %{state.milestone | tiles: new_tiles}
-        %{state | milestone: new_milestone}
-      else
-        state
-      end
+    #         if Enum.count(group.children) <= 2 do
+    #           # The group needs to be destroyed and the tiles cleared
+    #           cleared_tiles =
+    #             Enum.reduce_while(group.children, tiles, fn {_index, id}, acc ->
+    #               {_, map} =
+    #                 Map.get_and_update!(acc, id, fn item ->
+    #                   {item, %{item | group_index: nil, group_id: nil}}
+    #                 end)
 
-    {:noreply, new_state}
+    #               {:cont, map}
+    #             end)
+
+    #           groups = Map.delete(groups, group.id)
+
+    #           Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+    #             op: "delete_group",
+    #             d: %{
+    #               id: group.id
+    #             }
+    #           })
+
+    #           new_milestone = %{state.milestone | tiles: cleared_tiles, groups: groups}
+    #           %{state | milestone: new_milestone}
+    #         else
+    #           if tile.group_index == Enum.count(group.children) - 1 do
+    #             updated_group = %{group | children: Map.delete(group.children, tile.group_index)}
+    #             updated_tile = %{tile | group_id: nil, group_index: nil}
+
+    #             Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+    #               op: "update_group",
+    #               d: %{
+    #                 group: updated_group,
+    #                 remove: tile.id
+    #               }
+    #             })
+
+    #             new_milestone = %{
+    #               state.milestone
+    #               | groups: Map.replace!(groups, group.id, updated_group),
+    #                 tiles: Map.replace!(tiles, tile.id, updated_tile)
+    #             }
+
+    #             %{state | milestone: new_milestone}
+    #           else
+    #             if tile.group_index == 0 do
+    #               # Remove the tile, shift all to the right, preserve everything else
+    #               updated_group = %{
+    #                 group
+    #                 | children: Map.delete(group.children, tile.group_index)
+    #               }
+
+    #               updated_tile = %{tile | group_id: nil, group_index: nil}
+
+    #               total_indeces =
+    #                 updated_group.children
+    #                 |> Enum.map(fn {key, val} -> {key - 1, val} end)
+    #                 |> Enum.into(%{})
+
+    #               IO.puts("TOTAL INDICES NEW " <> inspect(total_indeces))
+
+    #               Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+    #                 op: "update_group",
+    #                 d: %{
+    #                   group: %{updated_group | children: total_indeces},
+    #                   remove: tile.id
+    #                 }
+    #               })
+
+    #               shifted_tiles =
+    #                 Enum.reduce_while(
+    #                   total_indeces,
+    #                   Map.put(tiles, tile.id, updated_tile),
+    #                   fn {index, id}, acc ->
+    #                     {_, map} =
+    #                       Map.get_and_update!(acc, id, fn item ->
+    #                         {item, %{item | group_index: index}}
+    #                       end)
+
+    #                     {:cont, map}
+    #                   end
+    #                 )
+
+    #               new_milestone = %{
+    #                 state.milestone
+    #                 | groups:
+    #                     Map.replace!(groups, group.id, %{updated_group | children: total_indeces}),
+    #                   tiles: shifted_tiles
+    #               }
+
+    #               %{state | milestone: new_milestone}
+    #             else
+    #               state
+    #             end
+    #           end
+    #         end
+    #       else
+    #         state
+    #       end
+
+    #     Anchorage.RoomSession.broadcast_ws(
+    #       state.room_id,
+    #       %{
+    #         op: "tile_moved",
+    #         d: %{
+    #           id: tile_id,
+    #           x: x,
+    #           y: y
+    #         }
+    #       },
+    #       except: peer_id
+    #     )
+
+    #     {_, new_tiles} =
+    #       Map.get_and_update!(new_state.milestone.tiles, tile_id, fn old ->
+    #         {old, %Tile{old | x: x, y: y}}
+    #       end)
+
+    #     new_milestone = %{new_state.milestone | tiles: new_tiles}
+    #     %{new_state | milestone: new_milestone}
+    #   else
+    #     state
+    #   end
+
+    {:noreply, %{}}
   end
 
   def snap_to(room_id, peer_id, tile_id, snap_to, snap_side) do
     cast(room_id, {:snap_to, peer_id, tile_id, snap_to, snap_side})
   end
 
-  def snap_to_impl(peer_id, tile_id, snap_to, snap_side, state) do
+  def snap_to_impl(_peer_id, tile_id, snap_to, snap_side, state) do
     tiles = state.milestone.tiles
     groups = state.milestone.groups
 
-    new_state =
-      if Map.has_key?(tiles, tile_id) and Map.has_key?(tiles, snap_to) do
-        tile = Map.get(tiles, tile_id)
-        snap_tile = Map.get(tiles, snap_to)
+    new_state = %{}
+    # new_state =
+    #   if Map.has_key?(tiles, tile_id) and Map.has_key?(tiles, snap_to) do
+    #     tile = Map.get(tiles, tile_id)
+    #     snap_tile = Map.get(tiles, snap_to)
 
-        if not is_nil(snap_tile.group_id) do
-          group = Map.get(groups, snap_tile.group_id)
+    #     if not is_nil(snap_tile.group_id) do
+    #       group = Map.get(groups, snap_tile.group_id)
 
-          index =
-            if snap_side == 0 do
-              snap_tile.group_index
-            else
-              snap_tile.group_index + 1
-            end
+    #       index =
+    #         if snap_side == 0 do
+    #           snap_tile.group_index
+    #         else
+    #           snap_tile.group_index + 1
+    #         end
 
-          # Unless it was snapped to the right most slot,
-          # other tiles need to be moved over an index
-          total_indeces =
-            unless index == Enum.count(group.children) do
-              right_of_snap = :maps.filter(fn i, _id -> i >= index end, group.children)
+    #       # Unless it was snapped to the right most slot,
+    #       # other tiles need to be moved over an index
+    #       total_indeces =
+    #         unless index == Enum.count(group.children) do
+    #           right_of_snap = :maps.filter(fn i, _id -> i >= index end, group.children)
 
-              right_of_snap
-              |> Enum.map(fn {key, val} -> {key + 1, val} end)
-              |> Enum.into(group.children)
-              |> Map.put(index, tile_id)
-            else
-              Map.put(group.children, index, tile_id)
-            end
+    #           right_of_snap
+    #           |> Enum.map(fn {key, val} -> {key + 1, val} end)
+    #           |> Enum.into(group.children)
+    #           |> Map.put(index, tile_id)
+    #         else
+    #           Map.put(group.children, index, tile_id)
+    #         end
 
-          updated_tile =
-            %{tile | group_index: index, group_id: group.id}
-            |> change_pos_to_snap(snap_tile, snap_side)
+    #       shifted_tiles =
+    #         Enum.reduce_while(total_indeces, tiles, fn {index, id}, acc ->
+    #           {_, map} =
+    #             Map.get_and_update!(acc, id, fn item -> {item, %{item | group_index: index}} end)
 
-          updated_group = %{group | children: total_indeces}
+    #           {:cont, map}
+    #         end)
 
-          Anchorage.RoomSession.broadcast_ws(
-            state.room_id,
-            %{
-              op: "tile_snapped",
-              d: %{
-                id: tile_id,
-                snapTo: snap_to,
-                snapSide: snap_side,
-                group: updated_group
-              }
-            },
-            except: peer_id
-          )
+    #       updated_tile =
+    #         %{tile | group_index: index, group_id: group.id}
+    #         |> change_pos_to_snap(snap_tile, snap_side)
 
-          all_tiles = Map.put(tiles, tile_id, updated_tile)
-          all_groups = Map.put(groups, group.id, updated_group)
+    #       updated_group = %{group | children: total_indeces}
 
-          IO.inspect(Map.values(all_groups))
-          IO.inspect(Map.values(all_tiles))
+    #       Anchorage.RoomSession.broadcast_ws(
+    #         state.room_id,
+    #         %{
+    #           op: "tile_snapped",
+    #           d: %{
+    #             id: tile_id,
+    #             snapTo: snap_to,
+    #             snapSide: snap_side,
+    #             group: updated_group
+    #           }
+    #         }
+    #       )
 
-          milestone = %{state.milestone | groups: all_groups, tiles: all_tiles}
-          %{state | milestone: milestone}
-        else
-          # Create a new group for the two tiles
-          group_id = SimpleId.gen(groups)
+    #       all_tiles = Map.put(shifted_tiles, tile_id, updated_tile)
+    #       all_groups = Map.put(groups, group.id, updated_group)
 
-          updated_current_tile =
-            %{tile | group_id: group_id, group_index: snap_side}
-            |> change_pos_to_snap(snap_tile, snap_side)
+    #       IO.inspect(Map.values(all_groups))
+    #       IO.inspect(Map.values(all_tiles))
 
-          updated_snap_to_tile = %{snap_tile | group_id: group_id, group_index: 1 - snap_side}
+    #       milestone = %{state.milestone | groups: all_groups, tiles: all_tiles}
+    #       %{state | milestone: milestone}
+    #     else
+    #       # Create a new group for the two tiles
+    #       group_id = SimpleId.gen(groups)
 
-          group =
-            create_group(group_id, %{
-              snap_side => tile_id,
-              (1 - snap_side) => snap_to
-            })
+    #       updated_current_tile =
+    #         %{tile | group_id: group_id, group_index: snap_side}
+    #         |> change_pos_to_snap(snap_tile, snap_side)
 
-          Anchorage.RoomSession.broadcast_ws(
-            state.room_id,
-            %{
-              op: "tile_snapped",
-              d: %{
-                id: tile_id,
-                snapTo: snap_to,
-                snapSide: snap_side,
-                group: group
-              }
-            },
-            except: peer_id
-          )
+    #       updated_snap_to_tile = %{snap_tile | group_id: group_id, group_index: 1 - snap_side}
 
-          all_tiles =
-            tiles
-            |> Map.put(tile_id, updated_current_tile)
-            |> Map.put(snap_to, updated_snap_to_tile)
+    #       group =
+    #         create_group(group_id, %{
+    #           snap_side => tile_id,
+    #           (1 - snap_side) => snap_to
+    #         })
 
-          all_groups = Map.put(groups, group_id, group)
+    #       Anchorage.RoomSession.broadcast_ws(
+    #         state.room_id,
+    #         %{
+    #           op: "tile_snapped",
+    #           d: %{
+    #             id: tile_id,
+    #             snapTo: snap_to,
+    #             snapSide: snap_side,
+    #             group: group
+    #           }
+    #         }
+    #       )
 
-          IO.inspect(Map.values(all_groups))
-          IO.inspect(Map.values(all_tiles))
+    #       all_tiles =
+    #         tiles
+    #         |> Map.put(tile_id, updated_current_tile)
+    #         |> Map.put(snap_to, updated_snap_to_tile)
 
-          milestone = %{state.milestone | groups: all_groups, tiles: all_tiles}
-          %{state | milestone: milestone}
-        end
-      end
+    #       all_groups = Map.put(groups, group_id, group)
+
+    #       IO.inspect(Map.values(all_groups))
+    #       IO.inspect(Map.values(all_tiles))
+
+    #       milestone = %{state.milestone | groups: all_groups, tiles: all_tiles}
+    #       %{state | milestone: milestone}
+    #     end
+    #   end
 
     {:noreply, new_state}
-  end
-
-  defp change_pos_to_snap(current, snap_to, snap_side) do
-    x = if snap_side == 1, do: snap_to.x + @tile_width, else: snap_to.x - @tile_width
-    y = snap_to.y
-    %{current | x: x, y: y}
-  end
-
-  defp create_group(id, children) do
-    %Group{
-      id: id,
-      children: children,
-      group_type: :set
-    }
   end
 
   defp joined_peers(peers) do

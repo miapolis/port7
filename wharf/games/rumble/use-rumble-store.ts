@@ -3,8 +3,7 @@ import {
   GameMilestone,
   Milestone,
   Peer,
-  Tile,
-  TileObject,
+  Group,
 } from "@port7/dock/lib/games/rumble";
 
 interface RumbleState {
@@ -20,6 +19,8 @@ interface RumbleState {
   addJoinedPeer: (id: number, nickname: string) => void;
   removeJoinedPeer: (id: number) => void;
   updateTile: (tile: any) => void;
+  updateGroup: (group: Group) => void;
+  deleteGroup: (id: number) => void;
 }
 
 export const useRumbleStore = create<RumbleState>((set) => ({
@@ -77,6 +78,26 @@ export const useRumbleStore = create<RumbleState>((set) => ({
       const milestone = state.milestone as GameMilestone;
       return {
         milestone: { ...milestone, tiles: milestone.tiles.set(tile.id, tile) },
+      };
+    });
+  },
+  updateGroup: (group: any) => {
+    set((state) => {
+      const milestone = state.milestone as GameMilestone;
+      return {
+        milestone: {
+          ...milestone,
+          groups: milestone.groups.set(group.id, group),
+        },
+      };
+    });
+  },
+  deleteGroup: (id: number) => {
+    set((state) => {
+      const milestone = state.milestone as GameMilestone;
+      milestone.groups.delete(id);
+      return {
+        milestone,
       };
     });
   },

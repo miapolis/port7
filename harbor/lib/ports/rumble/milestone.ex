@@ -12,7 +12,7 @@ defmodule Ports.Rumble.Milestone do
         |> Enum.into(%{})
 
       Jason.Encode.map(
-        Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles]),
+        Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles, :groups]),
         opts
       )
     end
@@ -26,7 +26,12 @@ defmodule Ports.Rumble.Milestone do
     end
   end
 
-  defstruct state: nil, start_time: nil, start_timer: nil, current_turn: nil, tiles: nil, groups: nil
+  defstruct state: nil,
+            start_time: nil,
+            start_timer: nil,
+            current_turn: nil,
+            tiles: nil,
+            groups: nil
 
   @type t :: %__MODULE__{
           state: binary(),
@@ -34,7 +39,7 @@ defmodule Ports.Rumble.Milestone do
           start_timer: any(),
           current_turn: integer(),
           tiles: %{integer => Tile.t()},
-          groups: %{integer => Group.t()},
+          groups: %{integer => Group.t()}
         }
 
   def tidy(milestone) do
