@@ -8,7 +8,7 @@ export type GroupType = "set" | "run";
 
 export interface Group {
   id: number;
-  children: Map<number, number>;
+  children: number[];
   groupType: GroupType;
 }
 
@@ -17,7 +17,6 @@ export interface Tile {
   x: number;
   y: number;
   groupId: number | undefined;
-  groupIndex: number | undefined;
 }
 
 export interface TileObject extends Tile {

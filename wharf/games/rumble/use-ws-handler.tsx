@@ -98,16 +98,14 @@ export const useWsHandler = () => {
         const snapToTile = tiles.get(data.snapTo) as TileObject;
         const group = data.group as Group;
 
-        new Map(Object.entries(group.children)).forEach((id, index: any) => {
+        group.children.forEach((id) => {
           const found = tiles.get(id) as TileObject;
           found.groupId = group.id;
-          found.groupIndex = index;
           useRumbleStore.getState().updateTile(found);
         });
 
         useRumbleStore.getState().updateGroup({
           ...group,
-          children: new Map(Object.entries(group.children)) as any,
         });
 
         const updated = {
@@ -129,11 +127,9 @@ export const useWsHandler = () => {
         const milestone = useRumbleStore.getState().milestone as GameMilestone;
         const group = milestone.groups.get(data.id) as Group;
 
-        new Map(Object.entries(group.children)).forEach((id) => {
+        group.children.forEach((id) => {
           const tile = milestone.tiles.get(id) as TileObject;
-          useRumbleStore
-            .getState()
-            .updateTile({ ...tile, groupId: null, groupIndex: null });
+          useRumbleStore.getState().updateTile({ ...tile, groupId: null });
         });
 
         useRumbleStore.getState().deleteGroup(data.id);
@@ -142,14 +138,10 @@ export const useWsHandler = () => {
         const milestone = useRumbleStore.getState().milestone as GameMilestone;
         const group = data.group;
 
-        new Map(Object.entries(group.children)).forEach(
-          (id: any, index: any) => {
-            const tile = milestone.tiles.get(id) as TileObject;
-            useRumbleStore
-              .getState()
-              .updateTile({ ...tile, groupId: group.id, groupIndex: index });
-          }
-        );
+        group.children.forEach((id: any) => {
+          const tile = milestone.tiles.get(id) as TileObject;
+          useRumbleStore.getState().updateTile({ ...tile, groupId: group.id });
+        });
 
         if (data.remove) {
           const tile = milestone.tiles.get(data.remove);

@@ -27,7 +27,6 @@ defmodule Ports.Rumble.Group do
 
   @type t :: %__MODULE__{
           id: integer(),
-          # Maps index to tile id
           children: [integer()],
           group_type: group_type()
         }

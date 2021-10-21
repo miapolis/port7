@@ -54,7 +54,9 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
           {rumbleDebugTiles ? (
             <div className="absolute top-2 left-2 text-primary-100">
               {`${data.id} ${
-                data.groupId !== null && data.groupId !== undefined ? "- " + data.groupId + " | " + data.groupIndex : ""
+                data.groupId !== null && data.groupId !== undefined
+                  ? "- " + data.groupId
+                  : ""
               }`}
             </div>
           ) : (
