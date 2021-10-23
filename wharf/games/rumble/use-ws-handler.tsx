@@ -38,7 +38,6 @@ export const useWsHandler = () => {
                   x: t.x,
                   y: t.y,
                   groupId: t.groupId,
-                  groupIndex: t.groupIndex,
                   lockedX: undefined,
                   lockedY: undefined,
                   snapSide: undefined,
@@ -145,12 +144,48 @@ export const useWsHandler = () => {
 
         if (data.remove) {
           const tile = milestone.tiles.get(data.remove);
-          useRumbleStore
-            .getState()
-            .updateTile({ ...tile, groupId: null, groupIndex: null });
+          useRumbleStore.getState().updateTile({ ...tile, groupId: null });
+        }
+        if (data.strict) {
+          const found = milestone.groups.get(group.id)!;
+          found.children.forEach((child) => {
+            if (!group.children.includes(child)) {
+              const tile = milestone.tiles.get(child) as TileObject;
+              useRumbleStore.getState().updateTile({ ...tile, groupId: null });
+            }
+          });
         }
 
-        useRumbleStore.getState().deleteGroup(data.id);
+        useRumbleStore.getState().updateGroup(group);
+      }),
+      conn.addListener("mass_update_groups", ({ data }: any) => {
+        const milestone = useRumbleStore.getState().milestone as GameMilestone;
+        const groups = data.groups;
+
+        groups.forEach((group: any) => {
+          const localGroup = milestone.groups.get(group.id);
+          const children: number[] = group.children;
+
+          children.forEach((child) => {
+            const tile = milestone.tiles.get(child)!;
+            useRumbleStore
+              .getState()
+              .updateTile({ ...tile, groupId: group.id });
+          });
+
+          if (localGroup) {
+            localGroup.children.forEach((child) => {
+              if (!group.children.includes(child)) {
+                const tile = milestone.tiles.get(child) as TileObject;
+                useRumbleStore
+                  .getState()
+                  .updateTile({ ...tile, groupId: null });
+              }
+            });
+          }
+
+          useRumbleStore.getState().updateGroup(group);
+        });
       }),
     ];
 

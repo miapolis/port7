@@ -338,6 +338,16 @@ defmodule Ports.Rumble.Game do
 
             if Enum.count(group.children) <= 2 do
               Board.move_to_delete_group(tile, group, state)
+            else
+              IO.puts("GROUP CHILDREN: " <> inspect(group.children))
+              index = Enum.find_index(group.children, fn x -> x == tile.id end)
+              IO.puts("INDEX " <> inspect(index))
+
+              if index == 0 or index == Enum.count(group.children) - 1 do
+                Board.move_end_tile(tile, index, group, state)
+              else
+                Board.move_middle_tile(tile, index, group, state)
+              end
             end
           else
             {state.milestone.tiles, state.milestone.groups}
