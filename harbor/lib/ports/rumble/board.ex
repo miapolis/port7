@@ -5,6 +5,8 @@ defmodule Ports.Rumble.Board do
 
   @tile_width 100
   @tile_height 130
+  @overlap_margin 20
+  @fix_overlap_precision 30
 
   ### - MOVING - #############################################################
 
@@ -198,14 +200,32 @@ defmodule Ports.Rumble.Board do
     {all_tiles, all_groups}
   end
 
-  @spec overlaps_any(number(), number(), %{any() => Tile.t()}) :: boolean()
+  @spec overlaps_any(number(), number(), %{any() => Tile.t()}) :: any()
   def overlaps_any(x, y, tiles) do
-    Enum.reduce_while(Map.values(tiles), false, fn tile, _acc ->
+    Enum.reduce_while(Map.values(tiles), nil, fn tile, _acc ->
       if x_overlap(tile.x, x) && y_overlap(tile.y, y) do
-        {:halt, true}
+        {:halt, tile}
       else
-        {:cont, false}
+        {:cont, nil}
       end
+    end)
+  end
+
+  def get_overlaps(x, y, tiles) do
+    Enum.reduce(Map.values(tiles), [], fn tile, acc ->
+      if x_overlap(tile.x, x) && y_overlap(tile.y, y) do
+        [tile | acc]
+      else
+        acc
+      end
+    end)
+  end
+
+  def fix_overlaps(main_tile, overlapping, all_tiles) do
+    Enum.reduce(overlapping, %{}, fn tile, acc ->
+      {fx, fy} = fix_pos_hopping(tile, main_tile, all_tiles)
+      IO.puts("FINAL X " <> inspect(fx) <> " FINAL Y " <> inspect(fy))
+      Map.put(acc, tile.id, %{tile | x: fx, y: fy})
     end)
   end
 
@@ -215,6 +235,32 @@ defmodule Ports.Rumble.Board do
 
   defp y_overlap(one, two) do
     Kernel.abs(one - two) < @tile_height
+  end
+
+  defp fix_pos_hopping(move_tile, main_tile, all_tiles) do
+    {sx, sy} = suggested_pos_given_overlap(move_tile, main_tile)
+    IO.puts("Entering fix hop iteration: " <> inspect(sx) <> ", " <> inspect(sy))
+    overlap = overlaps_any(sx, sy, Map.delete(all_tiles, move_tile.id))
+
+    unless is_nil(overlap) do
+      fix_pos_hopping(%{move_tile | x: sx, y: sy}, main_tile, all_tiles)
+    else
+      {sx, sy}
+    end
+  end
+
+  defp suggested_pos_given_overlap(to_move, static) do
+    x = coordinate_pos_fix(to_move.x, static.x)
+    y = coordinate_pos_fix(to_move.y, static.y)
+    {x, y}
+  end
+
+  defp coordinate_pos_fix(move, static) do
+    if move < static do
+      move - @fix_overlap_precision
+    else
+      move + @fix_overlap_precision
+    end
   end
 
   defp create_group(id, children) do

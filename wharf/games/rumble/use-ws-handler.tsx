@@ -91,14 +91,18 @@ export const useWsHandler = () => {
         useRumbleStore.getState().updateTile(data as Tile);
       }),
       conn.addListener("server_move", ({ data }: any) => {
-        useRumbleStore
-          .getState()
-          .updateTile({ ...(data as Tile), isServerMoving: true });
-
-        setTimeout(() => {
+        data.tiles.forEach((tile: Tile) => {
           useRumbleStore
             .getState()
-            .updateTile({ ...(data as Tile), isServerMoving: false });
+            .updateTile({ ...tile, isServerMoving: true });
+        });
+
+        setTimeout(() => {
+          data.tiles.forEach((tile: Tile) => {
+            useRumbleStore
+              .getState()
+              .updateTile({ ...tile, isServerMoving: false });
+          });
         }, 100);
       }),
       conn.addListener("tile_snapped", ({ data }: any) => {

@@ -364,17 +364,17 @@ defmodule Ports.Rumble.Game do
           except: peer_id
         )
 
-        overlaps = Board.overlaps_any(x, y, Map.delete(state.milestone.tiles, tile_id))
+        overlap = Board.overlaps_any(x, y, Map.delete(state.milestone.tiles, tile_id))
 
         overlap_map =
-          unless overlaps do
+          if is_nil(overlap) do
             Map.put(state.milestone.overlap_map, tile_id, {x, y})
           else
             state.milestone.overlap_map
           end
 
         {x, y} =
-          if end_move and overlaps do
+          if end_move && not is_nil(overlap) do
             {x, y} = Map.get(state.milestone.overlap_map, tile_id)
 
             Anchorage.RoomSession.broadcast_ws(
@@ -382,9 +382,13 @@ defmodule Ports.Rumble.Game do
               %{
                 op: "server_move",
                 d: %{
-                  id: tile_id,
-                  x: x,
-                  y: y
+                  tiles: [
+                    %{
+                      id: tile_id,
+                      x: x,
+                      y: y
+                    }
+                  ]
                 }
               }
             )
@@ -413,124 +417,6 @@ defmodule Ports.Rumble.Game do
       end
 
     {:noreply, state}
-
-    # new_state =
-    #   if Map.has_key?(tiles, tile_id) do
-    #     tile = Map.get(tiles, tile_id)
-
-    #     new_state =
-    #       unless is_nil(tile.group_id) or is_nil(tile.group_index) do
-    #         group = Map.get(groups, tile.group_id)
-
-    #         if Enum.count(group.children) <= 2 do
-    #           # The group needs to be destroyed and the tiles cleared
-    #           cleared_tiles =
-    #             Enum.reduce_while(group.children, tiles, fn {_index, id}, acc ->
-    #               {_, map} =
-    #                 Map.get_and_update!(acc, id, fn item ->
-    #                   {item, %{item | group_index: nil, group_id: nil}}
-    #                 end)
-
-    #               {:cont, map}
-    #             end)
-
-    #           groups = Map.delete(groups, group.id)
-
-    #           Anchorage.RoomSession.broadcast_ws(state.room_id, %{
-    #             op: "delete_group",
-    #             d: %{
-    #               id: group.id
-    #             }
-    #           })
-
-    #           new_milestone = %{state.milestone | tiles: cleared_tiles, groups: groups}
-    #           %{state | milestone: new_milestone}
-    #         else
-    #           if tile.group_index == Enum.count(group.children) - 1 do
-    #             updated_group = %{group | children: Map.delete(group.children, tile.group_index)}
-    #             updated_tile = %{tile | group_id: nil, group_index: nil}
-
-    #             Anchorage.RoomSession.broadcast_ws(state.room_id, %{
-    #               op: "update_group",
-    #               d: %{
-    #                 group: updated_group,
-    #                 remove: tile.id
-    #               }
-    #             })
-
-    #             new_milestone = %{
-    #               state.milestone
-    #               | groups: Map.replace!(groups, group.id, updated_group),
-    #                 tiles: Map.replace!(tiles, tile.id, updated_tile)
-    #             }
-
-    #             %{state | milestone: new_milestone}
-    #           else
-    #             if tile.group_index == 0 do
-    #               # Remove the tile, shift all to the right, preserve everything else
-    #               updated_group = %{
-    #                 group
-    #                 | children: Map.delete(group.children, tile.group_index)
-    #               }
-
-    #               updated_tile = %{tile | group_id: nil, group_index: nil}
-
-    #               total_indeces =
-    #                 updated_group.children
-    #                 |> Enum.map(fn {key, val} -> {key - 1, val} end)
-    #                 |> Enum.into(%{})
-
-    #               IO.puts("TOTAL INDICES NEW " <> inspect(total_indeces))
-
-    #               Anchorage.RoomSession.broadcast_ws(state.room_id, %{
-    #                 op: "update_group",
-    #                 d: %{
-    #                   group: %{updated_group | children: total_indeces},
-    #                   remove: tile.id
-    #                 }
-    #               })
-
-    #               shifted_tiles =
-    #                 Enum.reduce_while(
-    #                   total_indeces,
-    #                   Map.put(tiles, tile.id, updated_tile),
-    #                   fn {index, id}, acc ->
-    #                     {_, map} =
-    #                       Map.get_and_update!(acc, id, fn item ->
-    #                         {item, %{item | group_index: index}}
-    #                       end)
-
-    #                     {:cont, map}
-    #                   end
-    #                 )
-
-    #               new_milestone = %{
-    #                 state.milestone
-    #                 | groups:
-    #                     Map.replace!(groups, group.id, %{updated_group | children: total_indeces}),
-    #                   tiles: shifted_tiles
-    #               }
-
-    #               %{state | milestone: new_milestone}
-    #             else
-    #               state
-    #             end
-    #           end
-    #         end
-    #       else
-    #         state
-    #       end
-
-    #     {_, new_tiles} =
-    #       Map.get_and_update!(new_state.milestone.tiles, tile_id, fn old ->
-    #         {old, %Tile{old | x: x, y: y}}
-    #       end)
-
-    #     new_milestone = %{new_state.milestone | tiles: new_tiles}
-    #     %{new_state | milestone: new_milestone}
-    #   else
-    #     state
-    #   end
   end
 
   def snap_to(room_id, peer_id, tile_id, snap_to, snap_side) do
@@ -549,6 +435,29 @@ defmodule Ports.Rumble.Game do
             Board.snap_existing(tile, snap_to_tile, snap_side, state)
           else
             Board.snap_new(tile, snap_to_tile, snap_side, state)
+          end
+
+        new_tile = Map.get(tiles, tile_id)
+        all_overlaps = Board.get_overlaps(new_tile.x, new_tile.y, Map.delete(tiles, tile_id))
+
+        tiles =
+          if Enum.count(all_overlaps) > 0 do
+            IO.puts("Fixing overlaps: " <> inspect(all_overlaps))
+            fixed = Board.fix_overlaps(new_tile, all_overlaps, tiles)
+
+            Anchorage.RoomSession.broadcast_ws(
+              state.room_id,
+              %{
+                op: "server_move",
+                d: %{
+                  tiles: Map.values(fixed)
+                }
+              }
+            )
+
+            Map.merge(tiles, fixed)
+          else
+            tiles
           end
 
         %{state | milestone: %{state.milestone | tiles: tiles, groups: groups}}

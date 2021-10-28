@@ -21,7 +21,7 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
     <DraggableCore onDrag={onDragThis} onStop={() => onDragStop(id)}>
       <div
         className={`rounded-lg bg-primary-600 absolute cursor-move shadow-lg ${
-          data.isDragging ? "z-10" : ""
+          data.isDragging || data.isServerMoving ? "z-10" : ""
         }`}
         style={{
           width: "100px",
