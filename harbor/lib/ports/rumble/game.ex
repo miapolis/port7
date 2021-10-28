@@ -323,11 +323,11 @@ defmodule Ports.Rumble.Game do
     Enum.fetch!(peers, next).id
   end
 
-  def move_tile(room_id, peer_id, tile_id, x, y) do
-    cast(room_id, {:move_tile, peer_id, tile_id, x, y})
+  def move_tile(room_id, peer_id, tile_id, x, y, end_move) do
+    cast(room_id, {:move_tile, peer_id, tile_id, x, y, end_move})
   end
 
-  defp move_tile_impl(peer_id, tile_id, x, y, state) do
+  defp move_tile_impl(peer_id, tile_id, x, y, end_move, state) do
     state =
       if Map.has_key?(state.milestone.tiles, tile_id) do
         tile = Map.get(state.milestone.tiles, tile_id)
@@ -339,9 +339,7 @@ defmodule Ports.Rumble.Game do
             if Enum.count(group.children) <= 2 do
               Board.move_to_delete_group(tile, group, state)
             else
-              IO.puts("GROUP CHILDREN: " <> inspect(group.children))
               index = Enum.find_index(group.children, fn x -> x == tile.id end)
-              IO.puts("INDEX " <> inspect(index))
 
               if index == 0 or index == Enum.count(group.children) - 1 do
                 Board.move_end_tile(tile, index, group, state)
@@ -366,12 +364,50 @@ defmodule Ports.Rumble.Game do
           except: peer_id
         )
 
+        overlaps = Board.overlaps_any(x, y, Map.delete(state.milestone.tiles, tile_id))
+
+        overlap_map =
+          unless overlaps do
+            Map.put(state.milestone.overlap_map, tile_id, {x, y})
+          else
+            state.milestone.overlap_map
+          end
+
+        {x, y} =
+          if end_move and overlaps do
+            {x, y} = Map.get(state.milestone.overlap_map, tile_id)
+
+            Anchorage.RoomSession.broadcast_ws(
+              state.room_id,
+              %{
+                op: "server_move",
+                d: %{
+                  id: tile_id,
+                  x: x,
+                  y: y
+                }
+              }
+            )
+
+            {x, y}
+          else
+            {x, y}
+          end
+
         {_, new_tiles} =
           Map.get_and_update(tiles, tile_id, fn old ->
             {old, %Tile{old | x: x, y: y}}
           end)
 
-        %{state | milestone: %{state.milestone | tiles: new_tiles, groups: groups}}
+        %{
+          state
+          | milestone: %{
+              state.milestone
+              | tiles: new_tiles,
+                groups: groups,
+                overlap_map: overlap_map
+            }
+        }
       else
         state
       end
@@ -622,8 +658,11 @@ defmodule Ports.Rumble.Game do
   def handle_cast({:join_round, peer_id}, state), do: join_round_impl(peer_id, state)
   def handle_cast({:leave_round, peer_id}, state), do: leave_round_impl(peer_id, state)
 
-  def handle_cast({:move_tile, peer_id, tile_id, x, y}, %{milestone: %{state: "game"}} = state),
-    do: move_tile_impl(peer_id, tile_id, x, y, state)
+  def handle_cast(
+        {:move_tile, peer_id, tile_id, x, y, end_move},
+        %{milestone: %{state: "game"}} = state
+      ),
+      do: move_tile_impl(peer_id, tile_id, x, y, end_move, state)
 
   def handle_cast(
         {:snap_to, peer_id, tile_id, snap_to, snap_side},

@@ -25,6 +25,8 @@ export const TileGui: React.FC = () => {
             ? "-> snapping "
             : tile.isDragging
             ? "--> dragging "
+            : tile.isServerMoving
+            ? "--> SERVER MOVING"
             : ""
         }]`
       );

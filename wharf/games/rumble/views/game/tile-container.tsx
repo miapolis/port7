@@ -171,7 +171,7 @@ export const TileContainer: React.FC = () => {
     const x = data.lockedX ?? data.x;
     const y = data.lockedY ?? data.y;
     if (canSend || force) {
-      conn?.sendCast("rumble:move_tile", { id: data.id, x, y });
+      conn?.sendCast("rumble:move_tile", { id: data.id, x, y, endMove: force ?? null });
       setCanSend(false);
     }
   };

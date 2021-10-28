@@ -4,6 +4,7 @@ defmodule Ports.Rumble.Board do
   alias Ports.Rumble.Group
 
   @tile_width 100
+  @tile_height 130
 
   ### - MOVING - #############################################################
 
@@ -195,6 +196,25 @@ defmodule Ports.Rumble.Board do
     all_groups = Map.put(state.milestone.groups, group.id, updated_group)
 
     {all_tiles, all_groups}
+  end
+
+  @spec overlaps_any(number(), number(), %{any() => Tile.t()}) :: boolean()
+  def overlaps_any(x, y, tiles) do
+    Enum.reduce_while(Map.values(tiles), false, fn tile, _acc ->
+      if x_overlap(tile.x, x) && y_overlap(tile.y, y) do
+        {:halt, true}
+      else
+        {:cont, false}
+      end
+    end)
+  end
+
+  defp x_overlap(one, two) do
+    Kernel.abs(one - two) < @tile_width
+  end
+
+  defp y_overlap(one, two) do
+    Kernel.abs(one - two) < @tile_height
   end
 
   defp create_group(id, children) do

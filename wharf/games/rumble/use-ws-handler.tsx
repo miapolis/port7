@@ -43,6 +43,7 @@ export const useWsHandler = () => {
                   snapSide: undefined,
                   isDragging: false,
                   isSnapping: false,
+                  isServerMoving: false,
                 },
               ])
             ),
@@ -88,6 +89,17 @@ export const useWsHandler = () => {
       }),
       conn.addListener("tile_moved", ({ data }: any) => {
         useRumbleStore.getState().updateTile(data as Tile);
+      }),
+      conn.addListener("server_move", ({ data }: any) => {
+        useRumbleStore
+          .getState()
+          .updateTile({ ...(data as Tile), isServerMoving: true });
+
+        setTimeout(() => {
+          useRumbleStore
+            .getState()
+            .updateTile({ ...(data as Tile), isServerMoving: false });
+        }, 100);
       }),
       conn.addListener("tile_snapped", ({ data }: any) => {
         const milestone = useRumbleStore.getState().milestone as GameMilestone;

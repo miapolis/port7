@@ -31,7 +31,8 @@ defmodule Ports.Rumble.Milestone do
             start_timer: nil,
             current_turn: nil,
             tiles: nil,
-            groups: nil
+            groups: nil,
+            overlap_map: nil
 
   @type t :: %__MODULE__{
           state: binary(),
@@ -39,7 +40,8 @@ defmodule Ports.Rumble.Milestone do
           start_timer: any(),
           current_turn: integer(),
           tiles: %{integer => Tile.t()},
-          groups: %{integer => Group.t()}
+          groups: %{integer => Group.t()},
+          overlap_map: %{integer => {number(), number()}}
         }
 
   def tidy(milestone) do
@@ -71,7 +73,7 @@ defmodule Ports.Rumble.Milestone.StateMachine do
   end
 
   def before_transition(struct, "lobby", "game") do
-    {:ok, %{struct | start_time: nil, start_timer: nil}}
+    {:ok, %{struct | start_time: nil, start_timer: nil, overlap_map: %{}}}
   end
 
   def before_transition(struct, "game", "lobby") do

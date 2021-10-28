@@ -8,6 +8,7 @@ defmodule Ports.Rumble.Message.MoveTile do
     field(:y, :integer)
     field(:snapTo, :integer)
     field(:snapSide, :integer)
+    field(:endMove, :boolean)
   end
 
   @spec changeset(
@@ -20,17 +21,17 @@ defmodule Ports.Rumble.Message.MoveTile do
         ) :: Ecto.Changeset.t()
   def changeset(initializer \\ %__MODULE__{}, data) do
     initializer
-    |> cast(data, [:id, :x, :y, :snapTo, :snapSide])
+    |> cast(data, [:id, :x, :y, :snapTo, :snapSide, :endMove])
     |> validate_number(:id, less_than: 108, greater_than_or_equal_to: 0)
     |> validate_required([:x, :y])
   end
 
   def execute(changeset, state) do
-    with {:ok, %{id: id, x: x, y: y, snapTo: snap_to, snapSide: snap_side}} <-
+    with {:ok, %{id: id, x: x, y: y, snapTo: snap_to, snapSide: snap_side, endMove: end_move}} <-
            apply_action(changeset, :validation) do
       case snap_to do
         nil ->
-          Ports.Rumble.Game.move_tile(state.user.current_room_id, state.user.peer_id, id, x, y)
+          Ports.Rumble.Game.move_tile(state.user.current_room_id, state.user.peer_id, id, x, y, end_move)
 
         _ ->
           if snap_side == 0 || snap_side == 1 do

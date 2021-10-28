@@ -25,6 +25,7 @@ export interface TileObject extends Tile {
   snapSide: 0 | 1 | undefined;
   isDragging: boolean;
   isSnapping: boolean;
+  isServerMoving: boolean;
 }
 
 export interface BaseMilestone {

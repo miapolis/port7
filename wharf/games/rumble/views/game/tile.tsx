@@ -27,9 +27,10 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
           width: "100px",
           height: "130px",
           background: hovered ? "#3a4659ff" : "",
-          transition: data.isSnapping
-            ? `background 0.3s, transform ${SNAP_END_DELAY_MS / 1000}s`
-            : "background 0.3s",
+          transition:
+            data.isSnapping || data.isServerMoving
+              ? `background 0.3s, transform ${SNAP_END_DELAY_MS / 1000}s`
+              : "background 0.3s",
           transform: `translate(${data.lockedX ?? data.x}px, ${
             data.lockedY ?? data.y
           }px)`,
