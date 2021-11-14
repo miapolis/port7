@@ -7,11 +7,20 @@ import { rumbleDebugTiles } from "@port7/lib/constants";
 export interface TileProps {
   id: number;
   data: TileObject;
+  showHandle: { show: boolean; offset: boolean };
   onDrag: (event: any) => void;
   onDragStop: (id: number) => void;
+  onHover: (hover: boolean) => void;
 }
 
-export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
+export const Tile: React.FC<TileProps> = ({
+  id,
+  data,
+  showHandle,
+  onDrag,
+  onDragStop,
+  onHover,
+}) => {
   const [hovered, setHovered] = React.useState(false);
   const onDragThis = (e: DraggableEvent, data: DraggableData) => {
     onDrag({ id: id, deltaX: data.deltaX, deltaY: data.deltaY });
@@ -24,6 +33,7 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
           data.isDragging || data.isServerMoving ? "z-10" : ""
         }`}
         style={{
+          position: "absolute",
           width: "100px",
           height: "130px",
           background: hovered ? "#3a4659ff" : "",
@@ -35,8 +45,14 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
             data.lockedY ?? data.y
           }px)`,
         }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={() => {
+          setHovered(true);
+          onHover(true);
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+          onHover(false);
+        }}
       >
         <div className="relative w-full h-full">
           {data.snapSide === 1 ? (
@@ -64,7 +80,40 @@ export const Tile: React.FC<TileProps> = ({ id, data, onDrag, onDragStop }) => {
             ""
           )}
         </div>
+        {showHandle.show ? <GroupHandle data={showHandle} /> : ""}
       </div>
     </DraggableCore>
+  );
+};
+
+interface GroupHandleProps {
+  data: { show: boolean; offset: boolean };
+}
+
+const GroupHandle = ({ data }: GroupHandleProps) => {
+  return (
+    <div
+      style={{
+        width: 30,
+        height: 30,
+        position: "absolute",
+        bottom: -10,
+        left: data.offset ? "" : 0,
+        right: data.offset ? -15 : 0,
+        marginLeft: "auto",
+        marginRight: "auto",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          zIndex: 100,
+          background: "white",
+          width: "100%",
+          height: "100%",
+          borderRadius: "50%",
+        }}
+      ></div>
+    </div>
   );
 };

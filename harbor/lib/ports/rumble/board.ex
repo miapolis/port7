@@ -5,7 +5,6 @@ defmodule Ports.Rumble.Board do
 
   @tile_width 100
   @tile_height 130
-  @overlap_margin 20
   @fix_overlap_precision 30
 
   ### - MOVING - #############################################################
@@ -200,6 +199,33 @@ defmodule Ports.Rumble.Board do
     {all_tiles, all_groups}
   end
 
+  def move_group(group, x, y, state) do
+    {current_x, current_y} = get_group_center(group, state.milestone.tiles)
+    {delta_x, delta_y} = {x - current_x, y - current_y}
+
+    affected_tiles = Map.take(state.milestone.tiles, group.children)
+
+    updated_tiles =
+      for {id, tile} <- affected_tiles,
+          into: %{},
+          do: {id, %{tile | x: tile.x + delta_x, y: tile.y + delta_y}}
+
+    to_send =
+      Enum.reduce(updated_tiles, %{}, fn tile, acc ->
+        Map.put(acc, tile.id, {tile.x, tile.y})
+      end)
+
+    Anchorage.RoomSession.broadcast_ws(state.room_id, %{
+      op: "move_group",
+      d: %{
+        group: group,
+        positions: to_send
+      }
+    })
+
+    {Map.merge(state.milestone.tiles, updated_tiles), state.milestone.groups}
+  end
+
   @spec overlaps_any(number(), number(), %{any() => Tile.t()}) :: any()
   def overlaps_any(x, y, tiles) do
     Enum.reduce_while(Map.values(tiles), nil, fn tile, _acc ->
@@ -282,5 +308,26 @@ defmodule Ports.Rumble.Board do
     x = if snap_side == 1, do: snap_to.x + @tile_width, else: snap_to.x - @tile_width
     y = snap_to.y
     %{current | x: x, y: y}
+  end
+
+  defp get_group_influencer(group) do
+    count = Enum.count(group.children)
+
+    case rem(Enum.count(group.children), 2) do
+      0 -> {:even, group.children[count / 2 - 1]}
+      _ -> {:odd, group.children[(count + 1) / 2 - 1]}
+    end
+  end
+
+  defp get_group_center(group, tiles) do
+    case get_group_influencer(group) do
+      {:even, id} ->
+        tile = Map.get(tiles, id)
+        {tile.x + @tile_width / 2, tile.y - @tile_height / 2}
+
+      {:odd, id} ->
+        tile = Map.get(tiles, id)
+        {tile.x, tile.y - @tile_height / 2}
+    end
   end
 end

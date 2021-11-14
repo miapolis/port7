@@ -24,6 +24,9 @@ export const TileContainer: React.FC = () => {
   >(undefined);
 
   const [canSend, setCanSend] = React.useState(true);
+  const [currentHandle, setCurrentHandle] = React.useState<
+    { tileId: number; offset: boolean } | undefined
+  >();
 
   const findSnappable = (allTiles: TileObject[], current: TileObject) => {
     const result: TileObject[] = [];
@@ -64,6 +67,7 @@ export const TileContainer: React.FC = () => {
     if (!current) return;
 
     const snappable = findSnappable(Array.from(tiles.values()), current);
+    setCurrentHandle(undefined);
 
     current.isDragging = true;
     current.x += deltaX;
@@ -83,6 +87,8 @@ export const TileContainer: React.FC = () => {
     const snappable = findSnappable(Array.from(tiles.values()), current);
 
     if (snappable.length !== 0) {
+      if (current.groupId != null) return;
+
       // Determine which tile we are actually going to snapping to
       let tile;
       if (snappable.length === 1) tile = snappable[0];
@@ -171,7 +177,12 @@ export const TileContainer: React.FC = () => {
     const x = data.lockedX ?? data.x;
     const y = data.lockedY ?? data.y;
     if (canSend || force) {
-      conn?.sendCast("rumble:move_tile", { id: data.id, x, y, endMove: force ?? null });
+      conn?.sendCast("rumble:move_tile", {
+        id: data.id,
+        x,
+        y,
+        endMove: force ?? null,
+      });
       setCanSend(false);
     }
   };
@@ -186,6 +197,27 @@ export const TileContainer: React.FC = () => {
     });
   };
 
+  const onTileHover = (tile: TileObject, hover: boolean) => {
+    if (tile.groupId == null) return;
+    if (!hover) {
+      setCurrentHandle(undefined);
+      return;
+    }
+
+    const milestone = useRumbleStore.getState().milestone as GameMilestone;
+    const group = milestone.groups.get(tile.groupId)!;
+
+    const len = group.children.length;
+    if (len % 2 == 0) {
+      setCurrentHandle({ tileId: group.children[len / 2 - 1], offset: true });
+    } else {
+      setCurrentHandle({
+        tileId: group.children[(len + 1) / 2 - 1],
+        offset: false,
+      });
+    }
+  };
+
   return (
     <div>
       {Array.from(tiles.values()).map((tile) => {
@@ -194,8 +226,13 @@ export const TileContainer: React.FC = () => {
             key={tile.id}
             id={tile.id}
             data={tile}
+            showHandle={{
+              show: currentHandle?.tileId == tile.id,
+              offset: currentHandle?.offset || false,
+            }}
             onDrag={onDrag}
             onDragStop={onDragStop}
+            onHover={(hover) => onTileHover(tile, hover)}
           />
         );
       })}

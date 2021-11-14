@@ -426,7 +426,8 @@ defmodule Ports.Rumble.Game do
   def snap_to_impl(_peer_id, tile_id, snap_to, snap_side, state) do
     state =
       if Map.has_key?(state.milestone.tiles, tile_id) and
-           Map.has_key?(state.milestone.tiles, snap_to) do
+           Map.has_key?(state.milestone.tiles, snap_to) and
+           is_nil(Map.get(state.milestone.tiles, tile_id).group_id) do
         tile = Map.get(state.milestone.tiles, tile_id)
         snap_to_tile = Map.get(state.milestone.tiles, snap_to)
 
@@ -459,6 +460,25 @@ defmodule Ports.Rumble.Game do
           else
             tiles
           end
+
+        %{state | milestone: %{state.milestone | tiles: tiles, groups: groups}}
+      else
+        state
+      end
+
+    {:noreply, state}
+  end
+
+  def move_group(room_id, peer_id, group_id, x, y, end_move) do
+    cast(room_id, {:move_group, peer_id, group_id, x, y, end_move})
+  end
+
+  defp move_group_impl(_peer_id, group_id, x, y, _end_move, state) do
+    state =
+      if Map.has_key?(state.milestone.groups, group_id) do
+        group = Map.get(state.milestone.groups, group_id)
+
+        {tiles, groups} = Board.move_group(group, x, y, state)
 
         %{state | milestone: %{state.milestone | tiles: tiles, groups: groups}}
       else
@@ -574,10 +594,34 @@ defmodule Ports.Rumble.Game do
       do: move_tile_impl(peer_id, tile_id, x, y, end_move, state)
 
   def handle_cast(
+        {:move_tile, _peer_id, _tile_id, _x, _y, _end_move},
+        state
+      ),
+      do: {:noreply, state}
+
+  def handle_cast(
+        {:move_group, peer_id, group_id, x, y, end_move},
+        %{milestone: %{state: "game"}} = state
+      ),
+      do: move_group_impl(peer_id, group_id, x, y, end_move, state)
+
+  def handle_cast(
+        {:move_group, _peer_id, _group_id, _x, _y, _end_move},
+        state
+      ),
+      do: {:noreply, state}
+
+  def handle_cast(
         {:snap_to, peer_id, tile_id, snap_to, snap_side},
         %{milestone: %{state: "game"}} = state
       ),
       do: snap_to_impl(peer_id, tile_id, snap_to, snap_side, state)
+
+  def handle_cast(
+        {:snap_to, _peer_id, _tile_id, _snap_to, _snap_side},
+        state
+      ),
+      do: {:noreply, state}
 
   @impl true
   def handle_call({:get_state}, _reply, state), do: {:reply, state, state}

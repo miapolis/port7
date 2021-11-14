@@ -1,0 +1,5 @@
+commands:
+- copy:
+    source: ./.env.local.example
+    destination: wharf/.env.local
+    overwrite: false
