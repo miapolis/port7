@@ -7,8 +7,10 @@ import {
 import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "../../use-rumble-store";
 import { Tile } from "./tile";
+import { GroupHandle } from "./group-handle";
 
 const TILE_WIDTH = 100;
+const TILE_HEIGHT = 130;
 const SNAP_NEAR = 60;
 const SNAP_NEAR_Y = 120;
 export const SNAP_END_DELAY_MS = 100;
@@ -24,9 +26,17 @@ export const TileContainer: React.FC = () => {
   >(undefined);
 
   const [canSend, setCanSend] = React.useState(true);
-  const [currentHandle, setCurrentHandle] = React.useState<
-    { tileId: number; offset: boolean } | undefined
+  const [handle, setHandle] = React.useState<
+    | {
+        show: boolean;
+        tileId: number;
+        groupId: number;
+        offsetRight: boolean;
+        pos: { x: number; y: number };
+      }
+    | undefined
   >();
+  const [handleDragging, setHandleDragging] = React.useState(false);
 
   const findSnappable = (allTiles: TileObject[], current: TileObject) => {
     const result: TileObject[] = [];
@@ -67,7 +77,7 @@ export const TileContainer: React.FC = () => {
     if (!current) return;
 
     const snappable = findSnappable(Array.from(tiles.values()), current);
-    setCurrentHandle(undefined);
+    setHandle(undefined);
 
     current.isDragging = true;
     current.x += deltaX;
@@ -200,20 +210,32 @@ export const TileContainer: React.FC = () => {
   const onTileHover = (tile: TileObject, hover: boolean) => {
     if (tile.groupId == null) return;
     if (!hover) {
-      setCurrentHandle(undefined);
+      setHandle(undefined);
       return;
     }
 
     const milestone = useRumbleStore.getState().milestone as GameMilestone;
     const group = milestone.groups.get(tile.groupId)!;
 
+    const tiles = milestone.tiles;
     const len = group.children.length;
     if (len % 2 == 0) {
-      setCurrentHandle({ tileId: group.children[len / 2 - 1], offset: true });
+      const middleTile = tiles.get(group.children[len / 2 - 1])!;
+      setHandle({
+        show: true,
+        tileId: middleTile.id,
+        groupId: tile.groupId,
+        offsetRight: true,
+        pos: { x: middleTile.x + TILE_WIDTH, y: middleTile.y + TILE_HEIGHT },
+      });
     } else {
-      setCurrentHandle({
-        tileId: group.children[(len + 1) / 2 - 1],
-        offset: false,
+      const middleTile = tiles.get(group.children[(len + 1) / 2 - 1])!;
+      setHandle({
+        show: true,
+        tileId: middleTile.id,
+        groupId: tile.groupId,
+        offsetRight: false,
+        pos: { x: middleTile.x + TILE_WIDTH / 2, y: middleTile.y + TILE_HEIGHT },
       });
     }
   };
@@ -226,16 +248,29 @@ export const TileContainer: React.FC = () => {
             key={tile.id}
             id={tile.id}
             data={tile}
-            showHandle={{
-              show: currentHandle?.tileId == tile.id,
-              offset: currentHandle?.offset || false,
-            }}
             onDrag={onDrag}
             onDragStop={onDragStop}
             onHover={(hover) => onTileHover(tile, hover)}
           />
         );
       })}
+      <GroupHandle
+        show={handle?.show!}
+        pos={handle?.pos!}
+        onDrag={(deltaX: number, deltaY: number) => {
+          setHandleDragging(true);
+          setHandle({
+            ...handle!,
+            pos: { x: handle!.pos.x + deltaX, y: handle!.pos.y + deltaY },
+          });
+        }}
+        onDragStop={() => {
+          setHandleDragging(false);
+        }}
+        onHover={(hover: boolean) =>
+          setHandle({ ...handle!, show: handleDragging || hover })
+        }
+      />
     </div>
   );
 };

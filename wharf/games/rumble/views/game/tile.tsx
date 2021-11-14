@@ -7,7 +7,6 @@ import { rumbleDebugTiles } from "@port7/lib/constants";
 export interface TileProps {
   id: number;
   data: TileObject;
-  showHandle: { show: boolean; offset: boolean };
   onDrag: (event: any) => void;
   onDragStop: (id: number) => void;
   onHover: (hover: boolean) => void;
@@ -16,7 +15,6 @@ export interface TileProps {
 export const Tile: React.FC<TileProps> = ({
   id,
   data,
-  showHandle,
   onDrag,
   onDragStop,
   onHover,
@@ -69,7 +67,7 @@ export const Tile: React.FC<TileProps> = ({
             ""
           )}
           {rumbleDebugTiles ? (
-            <div className="absolute top-2 left-2 text-primary-100">
+            <div style={{userSelect: "none"}}className="absolute top-2 left-2 text-primary-100">
               {`${data.id} ${
                 data.groupId !== null && data.groupId !== undefined
                   ? "- " + data.groupId
@@ -80,40 +78,8 @@ export const Tile: React.FC<TileProps> = ({
             ""
           )}
         </div>
-        {showHandle.show ? <GroupHandle data={showHandle} /> : ""}
       </div>
     </DraggableCore>
   );
 };
 
-interface GroupHandleProps {
-  data: { show: boolean; offset: boolean };
-}
-
-const GroupHandle = ({ data }: GroupHandleProps) => {
-  return (
-    <div
-      style={{
-        width: 30,
-        height: 30,
-        position: "absolute",
-        bottom: -10,
-        left: data.offset ? "" : 0,
-        right: data.offset ? -15 : 0,
-        marginLeft: "auto",
-        marginRight: "auto",
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          zIndex: 100,
-          background: "white",
-          width: "100%",
-          height: "100%",
-          borderRadius: "50%",
-        }}
-      ></div>
-    </div>
-  );
-};
