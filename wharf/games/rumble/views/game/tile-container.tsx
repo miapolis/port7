@@ -175,7 +175,7 @@ export const TileContainer: React.FC = () => {
     tile.isDragging = false;
   };
 
-  const trySend = (data: any, force = false) => {
+  const trySend = (data: any, force = false, group = false) => {
     if (!sendInterval) {
       setSendInterval(
         setInterval(() => {
@@ -187,7 +187,7 @@ export const TileContainer: React.FC = () => {
     const x = data.lockedX ?? data.x;
     const y = data.lockedY ?? data.y;
     if (canSend || force) {
-      conn?.sendCast("rumble:move_tile", {
+      conn?.sendCast(`rumble:${group ? "move_group" : "move_tile"}`, {
         id: data.id,
         x,
         y,
@@ -215,7 +215,8 @@ export const TileContainer: React.FC = () => {
     }
 
     const milestone = useRumbleStore.getState().milestone as GameMilestone;
-    const group = milestone.groups.get(tile.groupId)!;
+    const group = milestone.groups.get(tile.groupId);
+    if (!group) return;
 
     const tiles = milestone.tiles;
     const len = group.children.length;
@@ -235,9 +236,39 @@ export const TileContainer: React.FC = () => {
         tileId: middleTile.id,
         groupId: tile.groupId,
         offsetRight: false,
-        pos: { x: middleTile.x + TILE_WIDTH / 2, y: middleTile.y + TILE_HEIGHT },
+        pos: {
+          x: middleTile.x + TILE_WIDTH / 2,
+          y: middleTile.y + TILE_HEIGHT,
+        },
       });
     }
+  };
+
+  const onHandleDrag = (deltaX: number, deltaY: number) => {
+    setHandleDragging(true);
+
+    const newX = handle!.pos.x + deltaX;
+    const newY = handle!.pos.y + deltaY;
+
+    setHandle({
+      ...handle!,
+      pos: { x: newX, y: newY },
+    });
+
+    const milestone = useRumbleStore.getState().milestone as GameMilestone;
+    const tiles = milestone.tiles;
+    const group = milestone.groups.get(handle!.groupId)!;
+
+    group.children.forEach((id) => {
+      const tile = tiles.get(id)!;
+      tile.x += deltaX;
+      tile.y += deltaY;
+      tile.isDragging = true;
+
+      updateTile(tile);
+    });
+
+    trySend({ id: group.id, x: newX, y: newY }, false, true);
   };
 
   return (
@@ -257,13 +288,7 @@ export const TileContainer: React.FC = () => {
       <GroupHandle
         show={handle?.show!}
         pos={handle?.pos!}
-        onDrag={(deltaX: number, deltaY: number) => {
-          setHandleDragging(true);
-          setHandle({
-            ...handle!,
-            pos: { x: handle!.pos.x + deltaX, y: handle!.pos.y + deltaY },
-          });
-        }}
+        onDrag={onHandleDrag}
         onDragStop={() => {
           setHandleDragging(false);
         }}

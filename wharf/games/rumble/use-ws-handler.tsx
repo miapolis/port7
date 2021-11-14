@@ -158,7 +158,7 @@ export const useWsHandler = () => {
           useRumbleStore.getState().updateTile({ ...tile, groupId: group.id });
         });
 
-        if (data.remove) {
+        if (data.remove != null) {
           const tile = milestone.tiles.get(data.remove);
           useRumbleStore.getState().updateTile({ ...tile, groupId: null });
         }
@@ -202,6 +202,21 @@ export const useWsHandler = () => {
 
           useRumbleStore.getState().updateGroup(group);
         });
+      }),
+      conn.addListener("group_moved", ({ data }: any) => {
+        const milestone = useRumbleStore.getState().milestone as GameMilestone;
+        const groups = milestone.groups;
+        const tiles = milestone.tiles;
+
+        Object.entries(data.positions).forEach(
+          ([id, position]) => {
+            const tile = tiles.get(parseInt(id))!;
+            console.log(tile)
+            useRumbleStore
+              .getState()
+              .updateTile({ ...tile, x: position.x, y: position.y });
+          }
+        );
       }),
     ];
 
