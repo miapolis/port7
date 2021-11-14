@@ -199,7 +199,7 @@ defmodule Ports.Rumble.Board do
     {all_tiles, all_groups}
   end
 
-  def move_group(group, x, y, state) do
+  def move_group(peer_id, group, x, y, state) do
     {current_x, current_y} = get_group_center(group, state.milestone.tiles)
     {delta_x, delta_y} = {x - current_x, y - current_y}
 
@@ -211,17 +211,21 @@ defmodule Ports.Rumble.Board do
           do: {id, %{tile | x: tile.x + delta_x, y: tile.y + delta_y}}
 
     to_send =
-      Enum.reduce(updated_tiles, %{}, fn tile, acc ->
-        Map.put(acc, tile.id, {tile.x, tile.y})
-      end)
+      for {id, tile} <- updated_tiles,
+          into: %{},
+          do: {id, %{x: tile.x, y: tile.y}}
 
-    Anchorage.RoomSession.broadcast_ws(state.room_id, %{
-      op: "move_group",
-      d: %{
-        group: group,
-        positions: to_send
-      }
-    })
+    Anchorage.RoomSession.broadcast_ws(
+      state.room_id,
+      %{
+        op: "group_moved",
+        d: %{
+          group: group,
+          positions: to_send
+        }
+      },
+      except: peer_id
+    )
 
     {Map.merge(state.milestone.tiles, updated_tiles), state.milestone.groups}
   end
@@ -314,8 +318,8 @@ defmodule Ports.Rumble.Board do
     count = Enum.count(group.children)
 
     case rem(Enum.count(group.children), 2) do
-      0 -> {:even, group.children[count / 2 - 1]}
-      _ -> {:odd, group.children[(count + 1) / 2 - 1]}
+      0 -> {:even, Enum.at(group.children, trunc(count / 2 - 1))}
+      _ -> {:odd, Enum.at(group.children, trunc((count + 1) / 2 - 1))}
     end
   end
 
@@ -323,11 +327,11 @@ defmodule Ports.Rumble.Board do
     case get_group_influencer(group) do
       {:even, id} ->
         tile = Map.get(tiles, id)
-        {tile.x + @tile_width / 2, tile.y - @tile_height / 2}
+        {tile.x + @tile_width, tile.y + @tile_height}
 
       {:odd, id} ->
         tile = Map.get(tiles, id)
-        {tile.x, tile.y - @tile_height / 2}
+        {tile.x + @tile_width / 2, tile.y + @tile_height}
     end
   end
 end

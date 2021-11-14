@@ -20,7 +20,8 @@ defmodule Pier.Message.Manifest do
     # RUMBLE
     "rumble:join_round" => Rumble.Message.JoinRound,
     "rumble:leave_round" => Rumble.Message.LeaveRound,
-    "rumble:move_tile" => Rumble.Message.MoveTile
+    "rumble:move_tile" => Rumble.Message.MoveTile,
+    "rumble:move_group" => Rumble.Message.MoveGroup
   }
 
   @actions

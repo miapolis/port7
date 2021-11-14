@@ -473,12 +473,12 @@ defmodule Ports.Rumble.Game do
     cast(room_id, {:move_group, peer_id, group_id, x, y, end_move})
   end
 
-  defp move_group_impl(_peer_id, group_id, x, y, _end_move, state) do
+  defp move_group_impl(peer_id, group_id, x, y, _end_move, state) do
     state =
       if Map.has_key?(state.milestone.groups, group_id) do
         group = Map.get(state.milestone.groups, group_id)
 
-        {tiles, groups} = Board.move_group(group, x, y, state)
+        {tiles, groups} = Board.move_group(peer_id, group, x, y, state)
 
         %{state | milestone: %{state.milestone | tiles: tiles, groups: groups}}
       else

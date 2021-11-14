@@ -19,8 +19,14 @@ defmodule Ports.Rumble.Message.MoveGroup do
   def execute(changeset, state) do
     with {:ok, %{id: id, x: x, y: y, endMove: end_move}} <-
            apply_action(changeset, :validation) do
-
-      Ports.Rumble.Game.move_group(state.user.current_room_id, state.user.peer_id, id, x, y, end_move)
+      Ports.Rumble.Game.move_group(
+        state.user.current_room_id,
+        state.user.peer_id,
+        id,
+        x,
+        y,
+        end_move
+      )
 
       {:noreply, state}
     end
