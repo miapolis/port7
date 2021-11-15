@@ -444,7 +444,6 @@ defmodule Ports.Rumble.Game do
 
         tiles =
           if Enum.count(all_overlaps) > 0 do
-            IO.puts("Fixing overlaps: " <> inspect(all_overlaps))
             fixed = Board.fix_overlaps(new_tile, all_overlaps, tiles)
 
             Anchorage.RoomSession.broadcast_ws(
@@ -481,7 +480,66 @@ defmodule Ports.Rumble.Game do
 
         {tiles, groups} = Board.move_group(peer_id, group, x, y, end_move, state)
 
-        %{state | milestone: %{state.milestone | tiles: tiles, groups: groups}}
+        any_children_overlap =
+          Enum.reduce_while(group.children, false, fn id, _acc ->
+            tile = Map.get(tiles, id)
+
+            if Board.overlaps_any(tile.x, tile.y, Map.delete(tiles, id)) do
+              {:halt, true}
+            else
+              {:cont, false}
+            end
+          end)
+
+        overlap_group_map =
+          if not any_children_overlap do
+            coord_data =
+              for {id, tile} <- Map.take(tiles, group.children),
+                  into: %{},
+                  do: {id, {tile.x, tile.y}}
+
+            Map.put(state.milestone.overlap_group_map, group_id, coord_data)
+          else
+            IO.puts("OVERLAP")
+
+            state.milestone.overlap_group_map
+          end
+
+        new_tiles =
+          if any_children_overlap and end_move do
+            coord_data = Map.get(state.milestone.overlap_group_map, group_id)
+
+            to_replace =
+              for {id, {x, y}} <- coord_data,
+                  into: %{},
+                  do: {id, %{Map.get(tiles, id) | x: x, y: y}}
+
+            to_send = for {id, {x, y}} <- coord_data, into: [], do: %{id: id, x: x, y: y}
+
+            Anchorage.RoomSession.broadcast_ws(
+              state.room_id,
+              %{
+                op: "server_move",
+                d: %{
+                  tiles: to_send
+                }
+              }
+            )
+
+            Map.merge(tiles, to_replace)
+          else
+            tiles
+          end
+
+        %{
+          state
+          | milestone: %{
+              state.milestone
+              | tiles: new_tiles,
+                groups: groups,
+                overlap_group_map: overlap_group_map
+            }
+        }
       else
         state
       end

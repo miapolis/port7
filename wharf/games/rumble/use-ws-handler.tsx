@@ -93,14 +93,24 @@ export const useWsHandler = () => {
           .updateTile({ isDragging: !data.endMove, ...(data as Tile) });
       }),
       conn.addListener("server_move", ({ data }: any) => {
-        data.tiles.forEach((tile: Tile) => {
+        const milestone = useRumbleStore.getState().milestone as GameMilestone;
+        const tiles = milestone.tiles;
+
+        data.tiles.forEach((dataTile: any) => {
+          const tile = tiles.get(dataTile.id)!;
           useRumbleStore
             .getState()
-            .updateTile({ ...tile, isServerMoving: true });
+            .updateTile({
+              ...tile,
+              x: dataTile.x,
+              y: dataTile.y,
+              isServerMoving: true,
+            });
         });
 
         setTimeout(() => {
-          data.tiles.forEach((tile: Tile) => {
+          data.tiles.forEach((dataTile: any) => {
+            const tile = tiles.get(dataTile.id)!;
             useRumbleStore
               .getState()
               .updateTile({ ...tile, isServerMoving: false });
@@ -210,13 +220,20 @@ export const useWsHandler = () => {
         const groups = milestone.groups;
         const tiles = milestone.tiles;
 
-        (Object.entries(data.positions) as [string, any][]).forEach(([id, position]) => {
-          const tile = tiles.get(parseInt(id))!;
-          console.log(tile);
-          useRumbleStore
-            .getState()
-            .updateTile({ ...tile, isDragging: !data.endMove, x: position.x, y: position.y });
-        });
+        (Object.entries(data.positions) as [string, any][]).forEach(
+          ([id, position]) => {
+            const tile = tiles.get(parseInt(id))!;
+            console.log(tile);
+            useRumbleStore
+              .getState()
+              .updateTile({
+                ...tile,
+                isDragging: !data.endMove,
+                x: position.x,
+                y: position.y,
+              });
+          }
+        );
       }),
     ];
 
