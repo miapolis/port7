@@ -244,7 +244,7 @@ export const TileContainer: React.FC = () => {
     }
   };
 
-  const onHandleDrag = (deltaX: number, deltaY: number) => {
+  const onHandleDrag = (deltaX: number, deltaY: number, force = false) => {
     setHandleDragging(true);
 
     const newX = handle!.pos.x + deltaX;
@@ -263,12 +263,13 @@ export const TileContainer: React.FC = () => {
       const tile = tiles.get(id)!;
       tile.x += deltaX;
       tile.y += deltaY;
-      tile.isDragging = true;
+      // If force is true, it signifies an end move
+      tile.isDragging = !force;
 
       updateTile(tile);
     });
 
-    trySend({ id: group.id, x: newX, y: newY }, false, true);
+    trySend({ id: group.id, x: newX, y: newY }, force, true);
   };
 
   return (
@@ -290,7 +291,7 @@ export const TileContainer: React.FC = () => {
         pos={handle?.pos!}
         onDrag={onHandleDrag}
         onDragStop={() => {
-          setHandleDragging(false);
+          onHandleDrag(0, 0, true);
         }}
         onHover={(hover: boolean) =>
           setHandle({ ...handle!, show: handleDragging || hover })

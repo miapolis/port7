@@ -46,7 +46,6 @@ defmodule Ports.Rumble.Board do
   def move_middle_tile(tile, tile_index, group, state) do
     new_children = List.delete_at(group.children, tile_index)
     {left, right} = Enum.split(new_children, tile_index)
-    IO.puts("LEFT: " <> inspect(left) <> ", RIGHT: " <> inspect(right))
 
     {left_invalid, right_invalid} = {Enum.count(left) <= 1, Enum.count(right) <= 1}
 
@@ -136,7 +135,6 @@ defmodule Ports.Rumble.Board do
 
     updated_snap_to = %{snap_to | group_id: group_id}
     children = if snap_side == 0, do: [tile.id, snap_to.id], else: [snap_to.id, tile.id]
-    IO.puts("CREATED CHILDREN" <> inspect(children))
 
     group = create_group(group_id, children)
 
@@ -170,7 +168,6 @@ defmodule Ports.Rumble.Board do
     index = if snap_side == 0, do: snap_to_index, else: snap_to_index + 1
 
     children = List.insert_at(group.children, index, tile.id)
-    IO.puts("CHILDREN AFTER SNAP " <> inspect(children))
     updated_group = %{group | children: children}
 
     updated_current =
@@ -199,7 +196,7 @@ defmodule Ports.Rumble.Board do
     {all_tiles, all_groups}
   end
 
-  def move_group(peer_id, group, x, y, state) do
+  def move_group(peer_id, group, x, y, end_move, state) do
     {current_x, current_y} = get_group_center(group, state.milestone.tiles)
     {delta_x, delta_y} = {x - current_x, y - current_y}
 
@@ -221,7 +218,8 @@ defmodule Ports.Rumble.Board do
         op: "group_moved",
         d: %{
           group: group,
-          positions: to_send
+          positions: to_send,
+          endMove: end_move
         }
       },
       except: peer_id
@@ -254,7 +252,6 @@ defmodule Ports.Rumble.Board do
   def fix_overlaps(main_tile, overlapping, all_tiles) do
     Enum.reduce(overlapping, %{}, fn tile, acc ->
       {fx, fy} = fix_pos_hopping(tile, main_tile, all_tiles)
-      IO.puts("FINAL X " <> inspect(fx) <> " FINAL Y " <> inspect(fy))
       Map.put(acc, tile.id, %{tile | x: fx, y: fy})
     end)
   end
@@ -269,7 +266,6 @@ defmodule Ports.Rumble.Board do
 
   defp fix_pos_hopping(move_tile, main_tile, all_tiles) do
     {sx, sy} = suggested_pos_given_overlap(move_tile, main_tile)
-    IO.puts("Entering fix hop iteration: " <> inspect(sx) <> ", " <> inspect(sy))
     overlap = overlaps_any(sx, sy, Map.delete(all_tiles, move_tile.id))
 
     unless is_nil(overlap) do

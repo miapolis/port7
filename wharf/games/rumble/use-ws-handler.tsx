@@ -88,7 +88,9 @@ export const useWsHandler = () => {
         setMilestone(data);
       }),
       conn.addListener("tile_moved", ({ data }: any) => {
-        useRumbleStore.getState().updateTile(data as Tile);
+        useRumbleStore
+          .getState()
+          .updateTile({ isDragging: !data.endMove, ...(data as Tile) });
       }),
       conn.addListener("server_move", ({ data }: any) => {
         data.tiles.forEach((tile: Tile) => {
@@ -208,15 +210,13 @@ export const useWsHandler = () => {
         const groups = milestone.groups;
         const tiles = milestone.tiles;
 
-        Object.entries(data.positions).forEach(
-          ([id, position]) => {
-            const tile = tiles.get(parseInt(id))!;
-            console.log(tile)
-            useRumbleStore
-              .getState()
-              .updateTile({ ...tile, x: position.x, y: position.y });
-          }
-        );
+        (Object.entries(data.positions) as [string, any][]).forEach(([id, position]) => {
+          const tile = tiles.get(parseInt(id))!;
+          console.log(tile);
+          useRumbleStore
+            .getState()
+            .updateTile({ ...tile, isDragging: !data.endMove, x: position.x, y: position.y });
+        });
       }),
     ];
 
