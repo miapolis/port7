@@ -38,6 +38,10 @@ export const TileContainer: React.FC = () => {
   >();
   const [handleDragging, setHandleDragging] = React.useState(false);
 
+  React.useEffect(() => {
+    setHandle(undefined);
+  }, [milestone.isAnyServerMoving]);
+
   const findSnappable = (allTiles: TileObject[], current: TileObject) => {
     const result: TileObject[] = [];
 
@@ -209,6 +213,7 @@ export const TileContainer: React.FC = () => {
 
   const onTileHover = (tile: TileObject, hover: boolean) => {
     if (tile.groupId == null) return;
+    if (handleDragging) return;
     if (!hover) {
       setHandle(undefined);
       return;
@@ -245,7 +250,7 @@ export const TileContainer: React.FC = () => {
   };
 
   const onHandleDrag = (deltaX: number, deltaY: number, force = false) => {
-    setHandleDragging(true);
+    setHandleDragging(!force);
 
     const newX = handle!.pos.x + deltaX;
     const newY = handle!.pos.y + deltaY;

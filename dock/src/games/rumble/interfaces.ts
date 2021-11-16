@@ -40,6 +40,7 @@ export interface GameMilestone extends BaseMilestone {
   currentTurn: number;
   tiles: Map<number, TileObject>;
   groups: Map<number, Group>;
+  isAnyServerMoving: boolean;
 }
 
 export type Milestone = LobbyMilestone | GameMilestone;

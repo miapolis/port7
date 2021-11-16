@@ -50,6 +50,7 @@ export const useWsHandler = () => {
             groups: new Map(
               (milestone.groups as Group[]).map((g) => [g.id, g])
             ),
+            isAnyServerMoving: false,
           };
           useRumbleStore.getState().setMilestone(game);
           break;
@@ -96,16 +97,18 @@ export const useWsHandler = () => {
         const milestone = useRumbleStore.getState().milestone as GameMilestone;
         const tiles = milestone.tiles;
 
+        useRumbleStore
+          .getState()
+          .setMilestone({ ...milestone, isAnyServerMoving: true });
+
         data.tiles.forEach((dataTile: any) => {
           const tile = tiles.get(dataTile.id)!;
-          useRumbleStore
-            .getState()
-            .updateTile({
-              ...tile,
-              x: dataTile.x,
-              y: dataTile.y,
-              isServerMoving: true,
-            });
+          useRumbleStore.getState().updateTile({
+            ...tile,
+            x: dataTile.x,
+            y: dataTile.y,
+            isServerMoving: true,
+          });
         });
 
         setTimeout(() => {
@@ -115,6 +118,10 @@ export const useWsHandler = () => {
               .getState()
               .updateTile({ ...tile, isServerMoving: false });
           });
+
+          useRumbleStore
+            .getState()
+            .setMilestone({ ...milestone, isAnyServerMoving: false });
         }, 100);
       }),
       conn.addListener("tile_snapped", ({ data }: any) => {
@@ -147,7 +154,7 @@ export const useWsHandler = () => {
         setTimeout(() => {
           useRumbleStore
             .getState()
-            .updateTile({ ...updated, isSnapping: false });
+            .updateTile({ ...updated, isSnapping: false, isDragging: false });
         }, 100);
       }),
       conn.addListener("delete_group", ({ data }: any) => {
@@ -217,21 +224,18 @@ export const useWsHandler = () => {
       }),
       conn.addListener("group_moved", ({ data }: any) => {
         const milestone = useRumbleStore.getState().milestone as GameMilestone;
-        const groups = milestone.groups;
         const tiles = milestone.tiles;
 
         (Object.entries(data.positions) as [string, any][]).forEach(
           ([id, position]) => {
             const tile = tiles.get(parseInt(id))!;
             console.log(tile);
-            useRumbleStore
-              .getState()
-              .updateTile({
-                ...tile,
-                isDragging: !data.endMove,
-                x: position.x,
-                y: position.y,
-              });
+            useRumbleStore.getState().updateTile({
+              ...tile,
+              isDragging: !data.endMove,
+              x: position.x,
+              y: position.y,
+            });
           }
         );
       }),

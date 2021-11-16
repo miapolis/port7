@@ -178,11 +178,13 @@ defmodule Ports.Rumble.Game do
   defp intial_tiles() do
     %{
       0 => %Tile{id: 0, x: 20, y: 20, group_id: nil},
-      1 => %Tile{id: 1, x: 300, y: 300, group_id: nil},
-      2 => %Tile{id: 2, x: 500, y: 500, group_id: nil},
-      3 => %Tile{id: 3, x: 20, y: 300, group_id: nil},
-      4 => %Tile{id: 4, x: 100, y: 100, group_id: nil},
-      5 => %Tile{id: 5, x: 100, y: 500, group_id: nil}
+      1 => %Tile{id: 1, x: 20, y: 300, group_id: nil},
+      2 => %Tile{id: 2, x: 150, y: 100, group_id: nil},
+      3 => %Tile{id: 3, x: 150, y: 500, group_id: nil},
+      4 => %Tile{id: 4, x: 300, y: 300, group_id: nil},
+      5 => %Tile{id: 5, x: 500, y: 500, group_id: nil},
+      6 => %Tile{id: 6, x: 650, y: 300, group_id: nil},
+      7 => %Tile{id: 7, x: 650, y: 500, group_id: nil}
     }
   end
 
@@ -500,8 +502,6 @@ defmodule Ports.Rumble.Game do
 
             Map.put(state.milestone.overlap_group_map, group_id, coord_data)
           else
-            IO.puts("OVERLAP")
-
             state.milestone.overlap_group_map
           end
 
