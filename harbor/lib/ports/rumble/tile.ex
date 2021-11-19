@@ -1,4 +1,6 @@
 defmodule Ports.Rumble.Tile do
+  alias Ports.Rumble.TileData
+
   defimpl Jason.Encoder, for: __MODULE__ do
     def encode(value, opts) do
       to_encode =
@@ -8,7 +10,7 @@ defmodule Ports.Rumble.Tile do
         |> Enum.into(%{})
 
       Jason.Encode.map(
-        Map.take(to_encode, [:id, :x, :y, :groupId, :groupIndex]),
+        Map.take(to_encode, [:id, :x, :y, :groupId, :data]),
         opts
       )
     end
@@ -16,18 +18,18 @@ defmodule Ports.Rumble.Tile do
     defp transform_key(old_key) do
       case old_key do
         :group_id -> :groupId
-        :group_index -> :groupIndex
         x -> x
       end
     end
   end
 
-  defstruct id: 0, x: 0, y: 0, group_id: 0
+  defstruct id: 0, x: 0, y: 0, group_id: 0, data: nil
 
   @type t :: %__MODULE__{
           id: integer(),
           x: integer(),
           y: integer(),
-          group_id: integer()
+          group_id: integer(),
+          data: TileData.t()
         }
 end
