@@ -9,6 +9,7 @@ defmodule Ports.Rumble.Game do
   alias Ports.Rumble.Milestone
   alias Ports.Rumble.Tile
   alias Ports.Rumble.Board
+  alias Ports.Rumble.Bag
 
   @behaviour BaseGame
 
@@ -175,29 +176,45 @@ defmodule Ports.Rumble.Game do
     })
   end
 
-  defp intial_tiles() do
-    %{
-      0 => %Tile{id: 0, x: 20, y: 20, group_id: nil},
-      1 => %Tile{id: 1, x: 20, y: 300, group_id: nil},
-      2 => %Tile{id: 2, x: 150, y: 100, group_id: nil},
-      3 => %Tile{id: 3, x: 150, y: 500, group_id: nil},
-      4 => %Tile{id: 4, x: 300, y: 300, group_id: nil},
-      5 => %Tile{id: 5, x: 500, y: 500, group_id: nil},
-      6 => %Tile{id: 6, x: 650, y: 300, group_id: nil},
-      7 => %Tile{id: 7, x: 650, y: 500, group_id: nil}
+  def initial_tiles(bag) do
+    {data, bag} =
+      Enum.reduce(0..7, {[], bag}, fn _, {data, bag} ->
+        {tile, bag} = Bag.draw_random(bag)
+        {[tile | data], bag}
+      end)
+
+    tiles = %{
+      0 => %Tile{id: 0, x: 20, y: 20, group_id: nil, data: Enum.at(data, 0)},
+      1 => %Tile{id: 1, x: 20, y: 300, group_id: nil, data: Enum.at(data, 1)},
+      2 => %Tile{id: 2, x: 150, y: 100, group_id: nil, data: Enum.at(data, 2)},
+      3 => %Tile{id: 3, x: 150, y: 500, group_id: nil, data: Enum.at(data, 3)},
+      4 => %Tile{id: 4, x: 300, y: 300, group_id: nil, data: Enum.at(data, 4)},
+      5 => %Tile{id: 5, x: 500, y: 500, group_id: nil, data: Enum.at(data, 5)},
+      6 => %Tile{id: 6, x: 650, y: 300, group_id: nil, data: Enum.at(data, 6)},
+      7 => %Tile{id: 7, x: 650, y: 500, group_id: nil, data: Enum.at(data, 7)}
     }
+
+    {tiles, bag}
   end
 
   def start_game(state) do
     milestone = %{
       state.milestone
-      | current_turn: next_turn(state),
-        tiles: intial_tiles(),
-        groups: %{}
+      | current_turn: next_turn(state)
     }
 
     case Fsmx.transition(milestone, "game") do
       {:ok, milestone} ->
+        {tiles, bag} = initial_tiles(milestone.bag)
+        IO.inspect(tiles, pretty: true)
+
+        milestone = %{
+          milestone
+          | tiles: tiles,
+            groups: %{},
+            bag: bag
+        }
+
         broadcast_milestone(state.room_id, Milestone.tidy(milestone))
 
         %{state | milestone: milestone}

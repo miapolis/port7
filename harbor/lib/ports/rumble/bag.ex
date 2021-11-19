@@ -7,11 +7,10 @@ defmodule Ports.Rumble.Bag do
           tiles: [TileData.t()]
         }
 
-  @spec draw_random(t()) :: {any() | nil, any()}
   def draw_random(bag) do
-    index = Enum.random(0..(Enum.count(bag.tiles) - 1))
+    index = Enum.random(Enum.to_list(0..(Enum.count(bag.tiles) - 1)))
     item = Enum.at(bag.tiles, index)
-    {item, List.delete_at(bag.tiles, index)}
+    {item, %{bag | tiles: List.delete_at(bag.tiles, index)}}
   end
 
   def create_initial() do
@@ -25,6 +24,6 @@ defmodule Ports.Rumble.Bag do
       end)
 
     # Add the jokers
-    [%TileData{value: -1, color: 1}, %TileData{value: -1, color: 2} | tiles]
+    %__MODULE__{tiles: [%TileData{value: -1, color: 1}, %TileData{value: -1, color: 2} | tiles]}
   end
 end

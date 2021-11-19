@@ -1,6 +1,7 @@
 defmodule Ports.Rumble.Milestone do
   alias Ports.Rumble.Tile
   alias Ports.Rumble.Group
+  alias Ports.Rumble.Bag
 
   defimpl Jason.Encoder, for: __MODULE__ do
     def encode(value, opts) do
@@ -33,7 +34,8 @@ defmodule Ports.Rumble.Milestone do
             tiles: nil,
             groups: nil,
             overlap_map: nil,
-            overlap_group_map: nil
+            overlap_group_map: nil,
+            bag: nil
 
   @type t :: %__MODULE__{
           state: binary(),
@@ -43,7 +45,8 @@ defmodule Ports.Rumble.Milestone do
           tiles: %{integer => Tile.t()},
           groups: %{integer => Group.t()},
           overlap_map: %{integer => {number(), number()}},
-          overlap_group_map: %{}
+          overlap_group_map: %{},
+          bag: Bag.t()
         }
 
   def tidy(milestone) do
@@ -61,6 +64,7 @@ end
 
 defmodule Ports.Rumble.Milestone.StateMachine do
   require Logger
+  alias Ports.Rumble.Bag
 
   use Fsmx.Fsm,
     transitions: %{
@@ -70,12 +74,22 @@ defmodule Ports.Rumble.Milestone.StateMachine do
       "podium" => "lobby"
     }
 
-  def before_transition(%{current_turn: nil, tiles: nil}, _initial, "game") do
-    {:error, "cannot transition to game without setting the current turn or tiles"}
+  def before_transition(%{current_turn: nil}, _initial, "game") do
+    {:error, "cannot transition to game without setting the current turn"}
   end
 
   def before_transition(struct, "lobby", "game") do
-    {:ok, %{struct | start_time: nil, start_timer: nil, overlap_map: %{}, overlap_group_map: %{}}}
+    {:ok,
+     %{
+       struct
+       | start_time: nil,
+         start_timer: nil,
+         tiles: %{},
+         groups: %{},
+         overlap_map: %{},
+         overlap_group_map: %{},
+         bag: Bag.create_initial()
+     }}
   end
 
   def before_transition(struct, "game", "lobby") do
