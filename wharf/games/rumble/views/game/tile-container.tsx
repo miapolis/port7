@@ -8,6 +8,7 @@ import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "../../use-rumble-store";
 import { Tile } from "./tile";
 import { GroupHandle } from "./group-handle";
+import { canSnap } from "../../util/tiles";
 
 const TILE_WIDTH = 100;
 const TILE_HEIGHT = 130;
@@ -44,6 +45,7 @@ export const TileContainer: React.FC = () => {
 
   const findSnappable = (allTiles: TileObject[], current: TileObject) => {
     const result: TileObject[] = [];
+    const milestone = useRumbleStore.getState().milestone as GameMilestone;
 
     Array.from(allTiles).forEach((tile) => {
       let snapSide: 0 | 1 | undefined = undefined;
@@ -65,8 +67,10 @@ export const TileContainer: React.FC = () => {
         snapSide !== undefined &&
         Math.abs(tile.y - current.y) < SNAP_NEAR_Y
       ) {
-        result.push({ ...tile, snapSide });
+        if (canSnap(milestone, current, tile, snapSide))
+          result.push({ ...tile, snapSide });
       } else if (tile.snapSide !== undefined) {
+        // Snap side undefined signifies unsnapping the tile
         result.push({ ...tile, snapSide: undefined });
       }
     });

@@ -12,6 +12,8 @@ export interface TileProps {
   onHover: (hover: boolean) => void;
 }
 
+const colors: string[] = ["#ff0000", "#00ff00", "#0000ff", "#ffa500"];
+
 export const Tile: React.FC<TileProps> = ({
   id,
   data,
@@ -65,9 +67,21 @@ export const Tile: React.FC<TileProps> = ({
             />
           ) : (
             ""
-          )}
+          )}{" "}
+          <div
+            className="flex h-full w-full justify-center items-center"
+            style={{
+              userSelect: "none",
+              color: `${colors[data.data.color - 1]}`,
+            }}
+          >
+            <h1>{data.data.value != -1 ? data.data.value : "J"}</h1>
+          </div>
           {rumbleDebugTiles ? (
-            <div style={{userSelect: "none"}}className="absolute top-2 left-2 text-primary-100">
+            <div
+              style={{ userSelect: "none" }}
+              className="absolute top-2 left-2 text-primary-100"
+            >
               {`${data.id} ${
                 data.groupId !== null && data.groupId !== undefined
                   ? "- " + data.groupId
@@ -82,4 +96,3 @@ export const Tile: React.FC<TileProps> = ({
     </DraggableCore>
   );
 };
-

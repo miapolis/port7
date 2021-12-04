@@ -37,6 +37,7 @@ export const useWsHandler = () => {
                   id: t.id,
                   x: t.x,
                   y: t.y,
+                  data: t.data,
                   groupId: t.groupId,
                   lockedX: undefined,
                   lockedY: undefined,
@@ -89,9 +90,16 @@ export const useWsHandler = () => {
         setMilestone(data);
       }),
       conn.addListener("tile_moved", ({ data }: any) => {
-        useRumbleStore
-          .getState()
-          .updateTile({ isDragging: !data.endMove, ...(data as Tile) });
+        const tile = (
+          useRumbleStore.getState().milestone as GameMilestone
+        ).tiles.get(data.id)!;
+
+        useRumbleStore.getState().updateTile({
+          ...tile,
+          isDragging: !data.endMove,
+          x: data.x,
+          y: data.y,
+        });
       }),
       conn.addListener("server_move", ({ data }: any) => {
         const milestone = useRumbleStore.getState().milestone as GameMilestone;

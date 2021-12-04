@@ -38,7 +38,9 @@ export const TileGui: React.FC = () => {
   const calculateGroupsList = () => {
     let main = new Array<string>();
     for (const group of groups.values()) {
-      main.push(`GROUP ${group.id} | children: [${group.children}]`);
+      main.push(
+        `GROUP ${group.id} {${group.groupType}} | children: [${group.children}]`
+      );
     }
 
     return main;

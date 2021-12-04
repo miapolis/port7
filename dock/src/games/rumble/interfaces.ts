@@ -12,11 +12,17 @@ export interface Group {
   groupType: GroupType;
 }
 
+export interface TileData {
+  value: number;
+  color: number;
+}
+
 export interface Tile {
   id: number;
   x: number;
   y: number;
   groupId: number | undefined;
+  data: TileData;
 }
 
 export interface TileObject extends Tile {
