@@ -66,7 +66,7 @@ defmodule Ports.Rumble.Board do
         # Groups have been split and a new group must be created
         # The original group will be the left, and the new group will be the right
         original = %{group | children: left}
-        new = create_group(SimpleId.gen(state.milestone.groups), right)
+        new = create_group(SimpleId.gen(state.milestone.groups), right, group.group_type)
         {original, new, nil}
       end
 
@@ -125,8 +125,8 @@ defmodule Ports.Rumble.Board do
 
   ### - SNAPPING - ###########################################################
 
-  @spec snap_new(Tile.t(), Tile.t(), integer(), any()) :: {%{}, %{}}
-  def snap_new(tile, snap_to, snap_side, state) do
+  @spec snap_new(Tile.t(), Tile.t(), integer(), Group.group_type(), any()) :: {%{}, %{}}
+  def snap_new(tile, snap_to, snap_side, type, state) do
     group_id = SimpleId.gen(state.milestone.groups)
 
     updated_current =
@@ -136,7 +136,7 @@ defmodule Ports.Rumble.Board do
     updated_snap_to = %{snap_to | group_id: group_id}
     children = if snap_side == 0, do: [tile.id, snap_to.id], else: [snap_to.id, tile.id]
 
-    group = create_group(group_id, children)
+    group = create_group(group_id, children, type)
 
     Anchorage.RoomSession.broadcast_ws(
       state.room_id,
@@ -228,6 +228,17 @@ defmodule Ports.Rumble.Board do
     {Map.merge(state.milestone.tiles, updated_tiles), state.milestone.groups}
   end
 
+  @spec can_create_group(Tile.t(), Tile.t()) :: {Group.group_type(), boolean()}
+  def can_create_group(tile, snap_to) do
+    if tile.data.color == snap_to.data.color do
+      # Only snap if the tiles are consecutive values
+      {:run, abs(tile.data.value - snap_to.data.value) == 1}
+    else
+      # They must be the same exact number
+      {:set, tile.data.value == snap_to.data.value}
+    end
+  end
+
   @spec overlaps_any(number(), number(), %{any() => Tile.t()}) :: any()
   def overlaps_any(x, y, tiles) do
     Enum.reduce_while(Map.values(tiles), nil, fn tile, _acc ->
@@ -289,11 +300,11 @@ defmodule Ports.Rumble.Board do
     end
   end
 
-  defp create_group(id, children) do
+  defp create_group(id, children, type) do
     %Group{
       id: id,
       children: children,
-      group_type: :set
+      group_type: type
     }
   end
 
