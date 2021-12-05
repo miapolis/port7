@@ -17,14 +17,12 @@ export const canSnap = (
     if (group.groupType == "set") {
       return canSnapSet(tiles, group, main, target);
     } else {
-      // A run
-      // if ()
+      // A run (main is snapping to target at snapSide)
+      return canSnapRun(main, target, snapSide);
     }
   } else {
-    // return false;
+    return canSnapNew(main, target);
   }
-
-  return true;
 };
 
 const canSnapSet = (
@@ -51,10 +49,24 @@ const canSnapSet = (
 };
 
 const canSnapRun = (
-  tiles: Map<number, TileObject>,
-  group: Group,
   main: TileObject,
-  target: TileObject
+  target: TileObject,
+  snapSide: 0 | 1
 ): boolean => {
-  return true;
+  if (main.data.color != target.data.color) return false;
+
+  if (snapSide == 0) {
+    // One less
+    return main.data.value == target.data.value - 1;
+  } else {
+    return main.data.value == target.data.value + 1;
+  }
+};
+
+const canSnapNew = (main: TileObject, target: TileObject): boolean => {
+  if (main.data.color == target.data.color) {
+    return Math.abs(main.data.value - target.data.value) == 1;
+  } else {
+    return main.data.value == target.data.value;
+  }
 };

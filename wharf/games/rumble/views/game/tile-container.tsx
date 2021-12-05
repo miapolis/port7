@@ -272,7 +272,7 @@ export const TileContainer: React.FC = () => {
       const tile = tiles.get(id)!;
       tile.x += deltaX;
       tile.y += deltaY;
-      // If force is true, it signifies an end moveEA
+      // If force is true, it signifies an end move
       tile.isDragging = !force;
 
       updateTile(tile);
