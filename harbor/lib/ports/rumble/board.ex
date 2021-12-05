@@ -260,10 +260,17 @@ defmodule Ports.Rumble.Board do
     end)
   end
 
-  def fix_overlaps(main_tile, overlapping, all_tiles) do
+  def fix_overlaps(main_tile, overlapping, all_tiles, all_groups) do
     Enum.reduce(overlapping, %{}, fn tile, acc ->
-      {fx, fy} = fix_pos_hopping(tile, main_tile, all_tiles)
-      Map.put(acc, tile.id, %{tile | x: fx, y: fy})
+      case tile.group_id do
+        nil ->
+          {fx, fy} = fix_pos_hopping(tile, main_tile, all_tiles)
+          Map.put(acc, tile.id, %{tile | x: fx, y: fy})
+
+        _ ->
+          new_children = fix_pos_hopping_group(tile, main_tile, all_tiles, all_groups)
+          Map.merge(acc, new_children)
+      end
     end)
   end
 
@@ -283,6 +290,41 @@ defmodule Ports.Rumble.Board do
       fix_pos_hopping(%{move_tile | x: sx, y: sy}, main_tile, all_tiles)
     else
       {sx, sy}
+    end
+  end
+
+  def fix_pos_hopping_group(lead_move_tile, main_tile, all_tiles, all_groups) do
+    children = Map.get(all_groups, lead_move_tile.group_id).children
+    {sx, sy} = suggested_pos_given_overlap(lead_move_tile, main_tile)
+
+    {delta_x, delta_y} = {sx - lead_move_tile.x, sy - lead_move_tile.y}
+
+    exp_children =
+      Enum.reduce(Map.take(all_tiles, children), %{}, fn {_idx, tile}, acc ->
+        {fx, fy} = {tile.x + delta_x, tile.y + delta_y}
+        Map.put(acc, tile.id, %{tile | x: fx, y: fy})
+      end)
+
+    any_overlap =
+      Enum.reduce_while(exp_children, false, fn {_idx, tile}, _acc ->
+        case overlaps_any(tile.x, tile.y, Map.drop(all_tiles, children)) do
+          nil ->
+            {:cont, false}
+
+          _ ->
+            {:halt, true}
+        end
+      end)
+
+    if any_overlap do
+      fix_pos_hopping_group(
+        %{lead_move_tile | x: sx, y: sy},
+        main_tile,
+        Map.merge(all_tiles, exp_children),
+        all_groups
+      )
+    else
+      exp_children
     end
   end
 

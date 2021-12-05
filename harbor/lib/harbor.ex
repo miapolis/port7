@@ -15,8 +15,10 @@ defmodule Harbor do
   def start(_type, _args) do
     load_env()
 
-    if Mix.env() != :test do
+    if Mix.env() != :test and System.get_env("INTRO") !== "false" do
       intro()
+    else
+      Logger.info("Harbor starting...")
     end
 
     children = [

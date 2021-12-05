@@ -176,7 +176,6 @@ defmodule Ports.Rumble.Game do
     })
   end
 
-
   def start_game(state) do
     milestone = %{
       state.milestone
@@ -449,7 +448,7 @@ defmodule Ports.Rumble.Game do
 
         tiles =
           if Enum.count(all_overlaps) > 0 do
-            fixed = Board.fix_overlaps(new_tile, all_overlaps, tiles)
+            fixed = Board.fix_overlaps(new_tile, all_overlaps, tiles, groups)
 
             Anchorage.RoomSession.broadcast_ws(
               state.room_id,
