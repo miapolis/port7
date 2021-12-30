@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "mix_task",
+      "name": "mix run",
+      "request": "launch",
+      "task": "run",
+      "env": {
+        "INTRO": "false"
+      },
+      "startApps": true,
+      "projectDir": "${workspaceRoot}/harbor"
+    }
+  ]
+}
