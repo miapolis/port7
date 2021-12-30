@@ -195,13 +195,13 @@ export const TileContainer: React.FC = () => {
     const x = data.lockedX ?? data.x;
     const y = data.lockedY ?? data.y;
     if (canSend || force) {
+      setCanSend(false);
       conn?.sendCast(`rumble:${group ? "move_group" : "move_tile"}`, {
         id: data.id,
         x,
         y,
         endMove: force ?? null,
       });
-      setCanSend(false);
     }
   };
 

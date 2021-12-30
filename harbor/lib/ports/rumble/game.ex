@@ -185,7 +185,6 @@ defmodule Ports.Rumble.Game do
     case Fsmx.transition(milestone, "game") do
       {:ok, milestone} ->
         {tiles, bag} = TestBoard.initial_tiles(milestone.bag)
-        IO.inspect(tiles, pretty: true)
 
         milestone = %{
           milestone
@@ -335,14 +334,14 @@ defmodule Ports.Rumble.Game do
             group = Map.get(state.milestone.groups, tile.group_id)
 
             if Enum.count(group.children) <= 2 do
-              Board.move_to_delete_group(tile, group, state)
+              Board.Moving.move_to_delete_group(tile, group, state)
             else
               index = Enum.find_index(group.children, fn x -> x == tile.id end)
 
               if index == 0 or index == Enum.count(group.children) - 1 do
-                Board.move_end_tile(tile, index, group, state)
+                Board.Moving.move_end_tile(tile, index, group, state)
               else
-                Board.move_middle_tile(tile, index, group, state)
+                Board.Moving.move_middle_tile(tile, index, group, state)
               end
             end
           else
@@ -363,7 +362,7 @@ defmodule Ports.Rumble.Game do
           except: peer_id
         )
 
-        overlap = Board.overlaps_any(x, y, Map.delete(state.milestone.tiles, tile_id))
+        overlap = Board.Overlaps.overlaps_any(x, y, Map.delete(state.milestone.tiles, tile_id))
 
         overlap_map =
           if is_nil(overlap) do
@@ -432,23 +431,29 @@ defmodule Ports.Rumble.Game do
 
         {tiles, groups} =
           if not is_nil(snap_to_tile.group_id) do
-            Board.snap_existing(tile, snap_to_tile, snap_side, state)
+            if Board.Common.can_snap_to(tile, snap_to_tile, snap_side, state) do
+              {tiles, groups} = Board.Snapping.snap_existing(tile, snap_to_tile, snap_side, state)
+            else
+              {state.milestone.tiles, state.milestone.groups}
+            end
           else
-            {type, can_create_group} = Board.can_create_group(tile, snap_to_tile)
+            {type, can_create_group} = Board.Common.can_create_group(tile, snap_to_tile)
 
             if can_create_group do
-              Board.snap_new(tile, snap_to_tile, snap_side, type, state)
+              Board.Snapping.snap_new(tile, snap_to_tile, snap_side, type, state)
             else
               {state.milestone.tiles, state.milestone.groups}
             end
           end
 
         new_tile = Map.get(tiles, tile_id)
-        all_overlaps = Board.get_overlaps(new_tile.x, new_tile.y, Map.delete(tiles, tile_id))
+
+        all_overlaps =
+          Board.Overlaps.get_overlaps(new_tile.x, new_tile.y, Map.delete(tiles, tile_id))
 
         tiles =
           if Enum.count(all_overlaps) > 0 do
-            fixed = Board.fix_overlaps(new_tile, all_overlaps, tiles, groups)
+            fixed = Board.Overlaps.fix_overlaps(new_tile, all_overlaps, tiles, groups)
 
             Anchorage.RoomSession.broadcast_ws(
               state.room_id,
@@ -482,13 +487,13 @@ defmodule Ports.Rumble.Game do
       if Map.has_key?(state.milestone.groups, group_id) do
         group = Map.get(state.milestone.groups, group_id)
 
-        {tiles, groups} = Board.move_group(peer_id, group, x, y, end_move, state)
+        {tiles, groups} = Board.Moving.move_group(peer_id, group, x, y, end_move, state)
 
         any_children_overlap =
           Enum.reduce_while(group.children, false, fn id, _acc ->
             tile = Map.get(tiles, id)
 
-            if Board.overlaps_any(tile.x, tile.y, Map.delete(tiles, id)) do
+            if Board.Overlaps.overlaps_any(tile.x, tile.y, Map.delete(tiles, id)) do
               {:halt, true}
             else
               {:cont, false}

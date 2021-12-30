@@ -237,7 +237,6 @@ export const useWsHandler = () => {
         (Object.entries(data.positions) as [string, any][]).forEach(
           ([id, position]) => {
             const tile = tiles.get(parseInt(id))!;
-            console.log(tile);
             useRumbleStore.getState().updateTile({
               ...tile,
               isDragging: !data.endMove,
