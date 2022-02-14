@@ -1,7 +1,5 @@
 defmodule Ports.Rumble.Board.Overlaps do
-  alias Harbor.Utils.SimpleId
   alias Ports.Rumble.Tile
-  alias Ports.Rumble.Group
   alias Ports.Rumble.Board.Common
 
   @fix_overlap_precision 30

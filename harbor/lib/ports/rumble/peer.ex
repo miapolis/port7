@@ -1,4 +1,6 @@
 defmodule Ports.Rumble.Peer do
+  alias Ports.Rumble.TileData
+
   defimpl Jason.Encoder, for: __MODULE__ do
     def encode(value, opts) do
       to_encode =
@@ -18,12 +20,14 @@ defmodule Ports.Rumble.Peer do
     end
   end
 
-  defstruct id: 0, nickname: "", is_disconnected: false, is_joined: false
+  defstruct id: 0, user_id: nil, nickname: "", is_disconnected: false, is_joined: false, hand: nil
 
   @type t :: %__MODULE__{
           id: integer(),
+          user_id: String.t(),
           nickname: String.t(),
           is_disconnected: boolean(),
-          is_joined: boolean()
+          is_joined: boolean(),
+          hand: [TileData.t()]
         }
 end

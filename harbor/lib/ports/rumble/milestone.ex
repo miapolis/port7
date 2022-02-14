@@ -13,7 +13,7 @@ defmodule Ports.Rumble.Milestone do
         |> Enum.into(%{})
 
       Jason.Encode.map(
-        Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles, :groups]),
+        Map.take(to_encode, [:state, :startTime, :serverNow, :currentTurn, :tiles, :groups, :me]),
         opts
       )
     end

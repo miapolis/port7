@@ -8,7 +8,14 @@ defmodule Harbor.MixProject do
       elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      name: "Harbor",
+      source_url: "https://github.com/miapolis/port7",
+      homepage_url: "https://github.com/miapolis/port7",
+      docs: [
+        main: "Harbor",
+        source_url_pattern: "https://github.com/miapolis/port7/blob/main/harbor/%{path}#L%{line}"
+      ]
     ]
   end
 
@@ -34,8 +41,10 @@ defmodule Harbor.MixProject do
       {:hackney, "~> 1.8"},
       {:vapor, "~> 0.10"},
       # TEST HELPERS
-      {:faker, "~> 0.16.0", only: :test},
-      {:websockex, "~> 0.4.3", only: :test}
+      {:faker, "~> 0.15.0", only: :test},
+      {:websockex, "~> 0.4.3", only: :test},
+      # EX_DOC
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
   end
 

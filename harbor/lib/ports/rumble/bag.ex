@@ -13,6 +13,13 @@ defmodule Ports.Rumble.Bag do
     {item, %{bag | tiles: List.delete_at(bag.tiles, index)}}
   end
 
+  def draw_random(bag, amount) do
+    Enum.reduce(0..(amount - 1), {[], bag}, fn _, {drawn, bag} ->
+      {item, bag} = draw_random(bag)
+      {[item | drawn], bag}
+    end)
+  end
+
   def create_initial() do
     tiles =
       Enum.reduce(1..13, [], fn i, acc ->

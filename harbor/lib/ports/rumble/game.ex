@@ -8,6 +8,7 @@ defmodule Ports.Rumble.Game do
   alias Ports.Rumble.Peer
   alias Ports.Rumble.Milestone
   alias Ports.Rumble.Tile
+  alias Ports.Rumble.Bag
   alias Ports.Rumble.Board
   alias Ports.Rumble.Util.TestBoard
 
@@ -176,6 +177,17 @@ defmodule Ports.Rumble.Game do
     })
   end
 
+  # Same as the regular `broadcast_milestone`, except supports
+  # an extra map of private data to be sent to each user individually
+  defp broadcast_milestone_indiv(milestone, indiv_data) do
+    for {uid, data} <- indiv_data do
+      Anchorage.RoomSession.ws_one(uid, %{
+        op: "set_milestone",
+        d: Map.put(milestone, :me, data)
+      })
+    end
+  end
+
   def start_game(state) do
     milestone = %{
       state.milestone
@@ -186,6 +198,8 @@ defmodule Ports.Rumble.Game do
       {:ok, milestone} ->
         {tiles, bag} = TestBoard.initial_tiles(milestone.bag)
 
+        state = initial_hands(bag, state)
+
         milestone = %{
           milestone
           | tiles: tiles,
@@ -193,13 +207,35 @@ defmodule Ports.Rumble.Game do
             bag: bag
         }
 
-        broadcast_milestone(state.room_id, Milestone.tidy(milestone))
+        indiv_data =
+          Enum.reduce(Map.values(state.peers), %{}, fn peer, acc ->
+            Map.put(acc, peer.user_id, %{hand: peer.hand})
+          end)
+
+        broadcast_milestone_indiv(Milestone.tidy(milestone), indiv_data)
 
         %{state | milestone: milestone}
 
       _ ->
         state
     end
+  end
+
+  def initial_hands(bag, state) do
+    {updated_peers, bag} =
+      Enum.reduce(Map.values(state.peers), {state.peers, bag}, fn peer, {peers, bag} ->
+        case peer.is_joined do
+          true ->
+            {drawn, bag} = Bag.draw_random(bag, 14)
+            {Map.put(peers, peer.id, %{peer | hand: drawn}), bag}
+
+          false ->
+            peer
+        end
+      end)
+
+    milestone = %{state.milestone | bag: bag}
+    %{state | peers: updated_peers, milestone: milestone}
   end
 
   def join_all_peers(state) do
@@ -432,7 +468,7 @@ defmodule Ports.Rumble.Game do
         {tiles, groups} =
           if not is_nil(snap_to_tile.group_id) do
             if Board.Common.can_snap_to(tile, snap_to_tile, snap_side, state) do
-              {tiles, groups} = Board.Snapping.snap_existing(tile, snap_to_tile, snap_side, state)
+              Board.Snapping.snap_existing(tile, snap_to_tile, snap_side, state)
             else
               {state.milestone.tiles, state.milestone.groups}
             end
@@ -595,6 +631,7 @@ defmodule Ports.Rumble.Game do
       :error ->
         new_peer = %Peer{
           id: peer.id,
+          user_id: user_id,
           nickname: peer.nickname,
           is_disconnected: peer.is_disconnected,
           is_joined: false

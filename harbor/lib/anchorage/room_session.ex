@@ -95,10 +95,21 @@ defmodule Anchorage.RoomSession do
      struct(State, Keyword.merge(init, inner_game: module, last_event_timestamp: Time.s_now()))}
   end
 
+  def ws_one(peer, msg) do
+    Anchorage.UserSession.send_ws(peer, nil, msg)
+  end
+
   def ws_fan(peers, msg) do
     Enum.each(Map.keys(peers), fn uid ->
       Anchorage.UserSession.send_ws(uid, nil, msg)
     end)
+  end
+
+  @spec ws_each(%{any() => any()}) :: any()
+  def ws_each(data) do
+    for {uid, msg} <- data do
+      ws_one(uid, msg)
+    end
   end
 
   ### - ROOM PRUNING - ################################################################
