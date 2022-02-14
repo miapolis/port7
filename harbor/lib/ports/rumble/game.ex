@@ -223,15 +223,9 @@ defmodule Ports.Rumble.Game do
 
   def initial_hands(bag, state) do
     {updated_peers, bag} =
-      Enum.reduce(Map.values(state.peers), {state.peers, bag}, fn peer, {peers, bag} ->
-        case peer.is_joined do
-          true ->
-            {drawn, bag} = Bag.draw_random(bag, 14)
-            {Map.put(peers, peer.id, %{peer | hand: drawn}), bag}
-
-          false ->
-            peer
-        end
+      Enum.reduce(joined_peers(state.peers), {state.peers, bag}, fn peer, {peers, bag} ->
+        {drawn, bag} = Bag.draw_random(bag, 14)
+        {Map.put(peers, peer.id, %{peer | hand: drawn}), bag}
       end)
 
     milestone = %{state.milestone | bag: bag}
