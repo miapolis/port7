@@ -10,6 +10,7 @@ defmodule Ports.Rumble.Game do
   alias Ports.Rumble.Tile
   alias Ports.Rumble.Bag
   alias Ports.Rumble.Board
+  alias Ports.Rumble.PrivatePeerData
   alias Ports.Rumble.Util.TestBoard
 
   @behaviour BaseGame
@@ -177,15 +178,30 @@ defmodule Ports.Rumble.Game do
     })
   end
 
-  # Same as the regular `broadcast_milestone`, except supports
-  # an extra map of private data to be sent to each user individually
-  defp broadcast_milestone_indiv(milestone, indiv_data) do
-    for {uid, data} <- indiv_data do
-      Anchorage.RoomSession.ws_one(uid, %{
+  # Same as the regular `broadcast_milestone`, except includes
+  # `me` property with private data unique to each peer
+  defp broadcast_milestone_with_private(state) do
+    Enum.each(Map.values(state.peers), fn peer ->
+      Anchorage.RoomSession.ws_one(peer.user_id, %{
         op: "set_milestone",
-        d: Map.put(milestone, :me, data)
+        d: wrap_milestone(state, peer.id)
       })
-    end
+    end)
+  end
+
+  # Packages a complete Milestone object with individual
+  # `me` data for the peer if they are joined
+  defp wrap_milestone(state, peer_id) do
+    peer = Map.get(state.peers, peer_id)
+
+    private_data =
+      if peer.is_joined do
+        peer.private_data
+      else
+        nil
+      end
+
+    %{Milestone.tidy(state.milestone) | me: private_data}
   end
 
   def start_game(state) do
@@ -207,12 +223,9 @@ defmodule Ports.Rumble.Game do
             bag: bag
         }
 
-        indiv_data =
-          Enum.reduce(Map.values(state.peers), %{}, fn peer, acc ->
-            Map.put(acc, peer.user_id, %{hand: peer.hand})
-          end)
+        state = %{state | milestone: milestone}
 
-        broadcast_milestone_indiv(Milestone.tidy(milestone), indiv_data)
+        broadcast_milestone_with_private(state)
 
         %{state | milestone: milestone}
 
@@ -225,7 +238,9 @@ defmodule Ports.Rumble.Game do
     {updated_peers, bag} =
       Enum.reduce(joined_peers(state.peers), {state.peers, bag}, fn peer, {peers, bag} ->
         {drawn, bag} = Bag.draw_random(bag, 14)
-        {Map.put(peers, peer.id, %{peer | hand: drawn}), bag}
+        private_data = %PrivatePeerData{hand: drawn}
+
+        {Map.put(peers, peer.id, %{peer | private_data: private_data}), bag}
       end)
 
     milestone = %{state.milestone | bag: bag}
@@ -615,7 +630,7 @@ defmodule Ports.Rumble.Game do
         if fetched.is_disconnected do
           peers = Map.replace!(state.peers, peer.id, %{fetched | is_disconnected: false})
 
-          send_landing(user_id, peers, state)
+          send_landing(user_id, peer.id, peers, state)
 
           {:noreply, %{state | peers: peers}}
         else
@@ -633,18 +648,22 @@ defmodule Ports.Rumble.Game do
 
         peers = Map.put(state.peers, peer.id, new_peer)
 
-        send_landing(user_id, peers, state)
+        state = %{state | peers: peers}
+        send_landing(user_id, peer.id, peers, state)
 
-        {:noreply, %{state | peers: peers}}
+        {:noreply, state}
     end
   end
 
-  defp send_landing(user_id, peers, state) do
+  defp send_landing(user_id, peer_id, peers, state) do
     Anchorage.UserSession.send_ws(user_id, nil, %{
       op: "landing",
       d: %{
         peers: Map.values(peers),
-        milestone: Map.merge(Milestone.tidy(state.milestone), %{serverNow: Utils.Time.ms_now()})
+        milestone:
+          Map.merge(wrap_milestone(state, peer_id), %{
+            serverNow: Utils.Time.ms_now()
+          })
       }
     })
   end

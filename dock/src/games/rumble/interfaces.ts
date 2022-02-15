@@ -34,6 +34,10 @@ export interface TileObject extends Tile {
   isServerMoving: boolean;
 }
 
+export interface MeData {
+  hand: TileData[];
+}
+
 export interface BaseMilestone {
   state: string;
 }
@@ -47,6 +51,7 @@ export interface GameMilestone extends BaseMilestone {
   tiles: Map<number, TileObject>;
   groups: Map<number, Group>;
   isAnyServerMoving: boolean;
+  me: MeData;
 }
 
 export type Milestone = LobbyMilestone | GameMilestone;

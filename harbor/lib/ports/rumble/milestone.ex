@@ -2,6 +2,7 @@ defmodule Ports.Rumble.Milestone do
   alias Ports.Rumble.Tile
   alias Ports.Rumble.Group
   alias Ports.Rumble.Bag
+  alias Ports.Rumble.PrivatePeerData
 
   defimpl Jason.Encoder, for: __MODULE__ do
     def encode(value, opts) do
@@ -35,7 +36,8 @@ defmodule Ports.Rumble.Milestone do
             groups: nil,
             overlap_map: nil,
             overlap_group_map: nil,
-            bag: nil
+            bag: nil,
+            me: nil
 
   @type t :: %__MODULE__{
           state: binary(),
@@ -46,7 +48,8 @@ defmodule Ports.Rumble.Milestone do
           groups: %{integer => Group.t()},
           overlap_map: %{integer => {number(), number()}},
           overlap_group_map: %{},
-          bag: Bag.t()
+          bag: Bag.t(),
+          me: PrivatePeerData.t()
         }
 
   def tidy(milestone) do
