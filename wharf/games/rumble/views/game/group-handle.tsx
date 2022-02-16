@@ -1,4 +1,5 @@
 import React from "react";
+import { AREA_WIDTH, AREA_HEIGHT } from "./tile-container";
 import { DraggableCore } from "react-draggable";
 
 export interface GroupHandleProps {
@@ -9,6 +10,9 @@ export interface GroupHandleProps {
   onDragStop: () => void;
   onHover: (hovering: boolean) => void;
 }
+
+const WIDTH = 40;
+const HEIGHT = 40;
 
 export const GroupHandle = ({
   show,
@@ -32,11 +36,13 @@ export const GroupHandle = ({
         >
           <div
             style={{
-              width: 40,
-              height: 40,
+              width: WIDTH / scale,
+              height: HEIGHT / scale,
               cursor: "move",
               position: "absolute",
-              transform: `translate(${pos.x - 20}px, ${pos.y - 20}px)`,
+              transform: `translate(${pos.x - WIDTH / scale / 2 + AREA_WIDTH / 2}px, ${
+                pos.y - HEIGHT / scale / 2 + AREA_HEIGHT / 2
+              }px)`,
               marginLeft: "auto",
               marginRight: "auto",
               zIndex: 30,
