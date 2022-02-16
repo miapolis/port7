@@ -343,7 +343,6 @@ export const TileContainer: React.FC = () => {
           e.preventDefault();
 
           const elementTransform = containerState.pan(e.movementX, e.movementY);
-          console.log(elementTransform);
           setContainerState({
             ...containerState,
             elementTransform: elementTransform,
