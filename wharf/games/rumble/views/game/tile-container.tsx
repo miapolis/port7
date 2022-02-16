@@ -333,6 +333,7 @@ export const TileContainer: React.FC = () => {
           setContainerState({
             ...containerState,
             elementTransform: elementTransform,
+            transform: { ...containerState.transform, scale: 1 },
           });
         }}
         onMouseMove={(e) => {
