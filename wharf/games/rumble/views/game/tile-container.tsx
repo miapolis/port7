@@ -4,12 +4,15 @@ import {
   Tile as TileData,
   TileObject,
 } from "@port7/dock/lib/games/rumble";
+import { State as ContainerState } from "./math/container";
 import { useConn } from "@port7/hooks/use-conn";
 import { useRumbleStore } from "../../use-rumble-store";
 import { Tile } from "./tile";
 import { GroupHandle } from "./group-handle";
 import { canSnap } from "../../util/tiles";
 
+export const AREA_WIDTH = 4000;
+export const AREA_HEIGHT = 4000;
 const TILE_WIDTH = 100;
 const TILE_HEIGHT = 130;
 const SNAP_NEAR = 60;
@@ -25,6 +28,14 @@ export const TileContainer: React.FC = () => {
   const [sendInterval, setSendInterval] = React.useState<
     NodeJS.Timeout | undefined
   >(undefined);
+
+  const outerRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [containerMouseDown, setContainerMouseDown] =
+    React.useState<boolean>(false);
+  const [containerState, setContainerState] = React.useState<ContainerState>(
+    new ContainerState(0.5, 2, 12)
+  );
 
   const [canSend, setCanSend] = React.useState(true);
   const [handle, setHandle] = React.useState<
@@ -282,30 +293,97 @@ export const TileContainer: React.FC = () => {
   };
 
   return (
-    <div>
-      {Array.from(tiles.values()).map((tile) => {
-        return (
-          <Tile
-            key={tile.id}
-            id={tile.id}
-            data={tile}
-            onDrag={onDrag}
-            onDragStop={onDragStop}
-            onHover={(hover) => onTileHover(tile, hover)}
-          />
-        );
-      })}
-      <GroupHandle
-        show={handle?.show!}
-        pos={handle?.pos!}
-        onDrag={onHandleDrag}
-        onDragStop={() => {
-          onHandleDrag(0, 0, true);
+    <div ref={outerRef} className="absolute w-full h-full bg-primary-800">
+      <div
+        ref={containerRef}
+        className="absolute const-tile-container bg-primary-900"
+        style={{
+          width: AREA_WIDTH,
+          height: AREA_HEIGHT,
+          transform: containerState.elementTransform,
+          transformOrigin: containerState.elementTransformOrigin,
         }}
-        onHover={(hover: boolean) =>
-          setHandle({ ...handle!, show: handleDragging || hover })
-        }
-      />
+        onWheel={(e) => {
+          const { left, top } = containerRef.current?.getBoundingClientRect()!;
+
+          const [transform, transformOrigin, scale] = containerState.zoom(
+            e.pageX,
+            e.pageY,
+            Math.sign(e.deltaY) > 0 ? -1 : 1,
+            left,
+            top
+          );
+
+          setContainerState({
+            ...containerState,
+            elementTransform: transform as string,
+            elementTransformOrigin: transformOrigin as string,
+            transform: { ...containerState.transform, scale: scale as number },
+          });
+        }}
+        onDoubleClick={() => {
+          let width = outerRef.current?.clientWidth!;
+          let height = outerRef.current?.clientHeight!;
+
+          const elementTransform = containerState.panTo(
+            -2000 + width / 2,
+            -2000 + height / 2,
+            1
+          );
+          setContainerState({
+            ...containerState,
+            elementTransform: elementTransform,
+          });
+        }}
+        onMouseMove={(e) => {
+          if (!containerMouseDown) {
+            return;
+          }
+          e.preventDefault();
+
+          const elementTransform = containerState.pan(e.movementX, e.movementY);
+          console.log(elementTransform);
+          setContainerState({
+            ...containerState,
+            elementTransform: elementTransform,
+          });
+        }}
+        onMouseDown={(e) => {
+          const classes = (e.target as HTMLDivElement).className;
+          if (classes.includes("const-tile-container")) {
+            setContainerMouseDown(true);
+          }
+        }}
+        onMouseUp={() => setContainerMouseDown(false)}
+      >
+        <div className="absolute">
+          {Array.from(tiles.values()).map((tile) => {
+            return (
+              <Tile
+                key={tile.id}
+                id={tile.id}
+                data={tile}
+                scale={containerState.transform.scale}
+                onDrag={onDrag}
+                onDragStop={onDragStop}
+                onHover={(hover) => onTileHover(tile, hover)}
+              />
+            );
+          })}
+          <GroupHandle
+            show={handle?.show!}
+            pos={handle?.pos!}
+            scale={containerState.transform.scale}
+            onDrag={onHandleDrag}
+            onDragStop={() => {
+              onHandleDrag(0, 0, true);
+            }}
+            onHover={(hover: boolean) =>
+              setHandle({ ...handle!, show: handleDragging || hover })
+            }
+          />
+        </div>
+      </div>
     </div>
   );
 };

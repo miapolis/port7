@@ -4,6 +4,7 @@ import { DraggableCore } from "react-draggable";
 export interface GroupHandleProps {
   show: boolean;
   pos: { x: number; y: number };
+  scale: number;
   onDrag: (deltaX: number, deltaY: number) => void;
   onDragStop: () => void;
   onHover: (hovering: boolean) => void;
@@ -12,6 +13,7 @@ export interface GroupHandleProps {
 export const GroupHandle = ({
   show,
   pos,
+  scale,
   onDrag,
   onDragStop,
   onHover,
@@ -21,7 +23,10 @@ export const GroupHandle = ({
       {show ? (
         <DraggableCore
           onDrag={(_e, data) => {
-            onDrag(data.deltaX, data.deltaY);
+            onDrag(
+              Math.round(data.deltaX / scale),
+              Math.round(data.deltaY / scale)
+            );
           }}
           onStop={() => onDragStop()}
         >

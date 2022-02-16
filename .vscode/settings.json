@@ -1,5 +1,5 @@
-  {
+{
   "elixirLS.projectDir": "harbor",
   "elixir.projectPath": "harbor",
-  "git.ignoreLimitWarning": true,
+  "git.ignoreLimitWarning": true
 }

@@ -29,6 +29,7 @@ export const useWsHandler = () => {
         case "game":
           const game: GameMilestone = {
             state: milestone.state,
+            me: milestone.me,
             currentTurn: milestone.currentTurn,
             tiles: new Map(
               (milestone.tiles as TileObject[]).map((t) => [
@@ -53,6 +54,7 @@ export const useWsHandler = () => {
             ),
             isAnyServerMoving: false,
           };
+          console.log(game);
           useRumbleStore.getState().setMilestone(game);
           break;
       }

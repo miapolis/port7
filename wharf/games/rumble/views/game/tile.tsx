@@ -1,12 +1,13 @@
 import React from "react";
 import { TileObject } from "@port7/dock/lib/games/rumble";
 import { DraggableCore, DraggableData, DraggableEvent } from "react-draggable";
-import { SNAP_END_DELAY_MS } from "./tile-container";
+import { SNAP_END_DELAY_MS, AREA_WIDTH, AREA_HEIGHT } from "./tile-container";
 import { rumbleDebugTiles } from "@port7/lib/constants";
 
 export interface TileProps {
   id: number;
   data: TileObject;
+  scale: number;
   onDrag: (event: any) => void;
   onDragStop: (id: number) => void;
   onHover: (hover: boolean) => void;
@@ -17,13 +18,18 @@ const colors: string[] = ["#ff0000", "#00ff00", "#0000ff", "#ffa500"];
 export const Tile: React.FC<TileProps> = ({
   id,
   data,
+  scale,
   onDrag,
   onDragStop,
   onHover,
 }) => {
   const [hovered, setHovered] = React.useState(false);
   const onDragThis = (e: DraggableEvent, data: DraggableData) => {
-    onDrag({ id: id, deltaX: data.deltaX, deltaY: data.deltaY });
+    onDrag({
+      id: id,
+      deltaX: Math.round(data.deltaX / scale),
+      deltaY: Math.round(data.deltaY / scale),
+    });
   };
 
   return (
@@ -41,8 +47,8 @@ export const Tile: React.FC<TileProps> = ({
             data.isSnapping || data.isServerMoving
               ? `background 0.3s, transform ${SNAP_END_DELAY_MS / 1000}s`
               : "background 0.3s",
-          transform: `translate(${data.lockedX ?? data.x}px, ${
-            data.lockedY ?? data.y
+          transform: `translate(${data.lockedX ?? data.x + AREA_WIDTH / 2}px, ${
+            data.lockedY ?? data.y + AREA_HEIGHT / 2
           }px)`,
         }}
         onMouseEnter={() => {
