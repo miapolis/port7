@@ -40,9 +40,9 @@ export const GroupHandle = ({
               height: HEIGHT / scale,
               cursor: "move",
               position: "absolute",
-              transform: `translate(${pos.x - WIDTH / scale / 2 + AREA_WIDTH / 2}px, ${
-                pos.y - HEIGHT / scale / 2 + AREA_HEIGHT / 2
-              }px)`,
+              transform: `translate(${
+                pos.x - WIDTH / scale / 2 + AREA_WIDTH / 2
+              }px, ${pos.y - HEIGHT / scale / 2 + AREA_HEIGHT / 2}px)`,
               marginLeft: "auto",
               marginRight: "auto",
               zIndex: 30,

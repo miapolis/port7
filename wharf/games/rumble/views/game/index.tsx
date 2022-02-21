@@ -6,13 +6,13 @@ import { Hand } from "./hand";
 
 export const Game = () => {
   return (
-    <>
+    <div className="relative w-full h-full flex-shrink">
       <TileContainer />
       <div className="w-full h-full flex flex-col">
         <div className="flex-1" />
         <Hand />
       </div>
       {rumbleDebugTiles ? <TileGui /> : ""}
-    </>
+    </div>
   );
 };

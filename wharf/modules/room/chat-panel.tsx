@@ -16,19 +16,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ open }) => {
   const [selection, setSelection] = React.useState(1);
 
   const outerClass =
-    size.x > 1200
-      ? "relative"
-      : size.x > 500
-      ? "w-96 absolute right-0 bottom-0 top-12 shadow-xl"
-      : "absolute right-0 bottom-0 top-10 w-full";
+    size.x > 500 ? "relative" : "absolute right-0 bottom-0 top-10 w-full";
 
   return (
     <div
-      className={`w-96 bg-primary-700 flex flex-col ${outerClass} ${
+      className={`w-96 bg-primary-700 flex-shrink-0 flex flex-col ${outerClass} ${
         !open ? "hidden" : ""
       }`}
+      style={{ minWidth: "24rem" }}
     >
-      <div className="w-full h-12 bg-primary-700 flex-shrink-0 grid grid-cols-3 gap-x-1">
+      <div className="w-full h-12 bg-primary-700 grid grid-cols-3 gap-x-1">
         <ChatPanelIcon
           isSelected={selection === 1}
           icon={<SmsRoundedIcon style={{ color: "#dee3ea" }} />}

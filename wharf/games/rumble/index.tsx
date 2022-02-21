@@ -9,7 +9,7 @@ export const Rumble: React.FC = () => {
   const milestone = useRumbleStore().milestone;
 
   return (
-    <div className="w-full h-full flex">
+    <div className="w-full min-w-0 h-full flex flex-shrink">
       <WsHandlerProvider>
         <WaitForLanding>
           {milestone?.state === "lobby" ? (
