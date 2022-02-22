@@ -383,9 +383,11 @@ __metadata:
     "@port7/dock": "workspace:dock"
     "@tailwindcss/line-clamp": ^0.2.0
     "@types/react": 17.0.16
+    "@use-gesture/react": ^10.2.6
     autoprefixer: ^10.2.5
     eslint: 7.32.0
     eslint-config-next: 11.0.1
+    lodash-move: ^1.1.1
     next: 11.0.1
     normalize-url: 4
     react: 17.0.2
@@ -688,6 +690,24 @@ __metadata:
     "@typescript-eslint/types": 4.29.1
     eslint-visitor-keys: ^2.0.0
   checksum: a99db94f80331a0bdd2e4828d43daa7d391312d6edf77d8f80fcd37530ea9eacbf8014dc3378a26e9e22891e0d97c5637fcde2d6272ed091de74ede22bec0224
+  languageName: node
+  linkType: hard
+
+"@use-gesture/core@npm:10.2.6":
+  version: 10.2.6
+  resolution: "@use-gesture/core@npm:10.2.6"
+  checksum: 14873ca91b6e8965d39a03f69d12f3568388c1f05dfc3e95aec0d83e29617b1a92e4fd01cb311fd388e8013287b252172b701655d6da57ee8a4a4edb0f236f26
+  languageName: node
+  linkType: hard
+
+"@use-gesture/react@npm:^10.2.6":
+  version: 10.2.6
+  resolution: "@use-gesture/react@npm:10.2.6"
+  dependencies:
+    "@use-gesture/core": 10.2.6
+  peerDependencies:
+    react: ">= 16.8.0"
+  checksum: 5a268f17a2f3fea4054db6b8fa09be941225af1af9b7100ac4a8b470cc7cc2fef9c20c05a9f4c29dc298d82338bf2c922dc863799811289eb064056ab4432c55
   languageName: node
   linkType: hard
 
@@ -3563,6 +3583,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash-move@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "lodash-move@npm:1.1.1"
+  dependencies:
+    lodash: ^4.6.1
+  checksum: f78860c10d3b1f45ac6423111f1d0f929bcc90e6dc6af2790557c489517fa67ee36ea06ad882c5db8ce92d590eaaec81a4e36153a0280cbe317780ff9432d07c
+  languageName: node
+  linkType: hard
+
 "lodash.clonedeep@npm:^4.5.0":
   version: 4.5.0
   resolution: "lodash.clonedeep@npm:4.5.0"
@@ -3598,7 +3627,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:^4.17.13, lodash@npm:^4.17.21":
+"lodash@npm:^4.17.13, lodash@npm:^4.17.21, lodash@npm:^4.6.1":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
