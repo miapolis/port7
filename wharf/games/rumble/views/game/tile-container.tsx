@@ -19,7 +19,13 @@ const SNAP_NEAR = 60;
 const SNAP_NEAR_Y = 120;
 export const SNAP_END_DELAY_MS = 100;
 
-export const TileContainer: React.FC = () => {
+export interface TileContainerProps {
+  onUpdateMatrixScale: (scale: number) => void;
+}
+
+export const TileContainer: React.FC<TileContainerProps> = ({
+  onUpdateMatrixScale,
+}) => {
   const conn = useConn();
   const state = useRumbleStore();
   const updateTile = state.updateTile;
@@ -314,6 +320,7 @@ export const TileContainer: React.FC = () => {
             top
           );
 
+          onUpdateMatrixScale(scale as number);
           setContainerState({
             ...containerState,
             elementTransform: transform as string,
@@ -330,6 +337,8 @@ export const TileContainer: React.FC = () => {
             -2000 + height / 2,
             1
           );
+
+          onUpdateMatrixScale(1);
           setContainerState({
             ...containerState,
             elementTransform: elementTransform,

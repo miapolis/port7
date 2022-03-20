@@ -4,6 +4,8 @@ import {
   Milestone,
   Peer,
   Group,
+  TileData,
+  MeData,
 } from "@port7/dock/lib/games/rumble";
 
 interface RumbleState {
@@ -13,6 +15,7 @@ interface RumbleState {
   serverToLocalNow: number | undefined;
   doLanding: () => void;
   setMilestone: (milestone: Milestone) => void;
+  setMeData: (meData: MeData) => void;
   setServerNow: (serverNow: number) => void;
   setStartTimestamp: (timestamp: number | undefined) => void;
   setJoinedPeers: (peers: Peer[]) => void;
@@ -21,6 +24,8 @@ interface RumbleState {
   updateTile: (tile: any) => void;
   updateGroup: (group: Group) => void;
   deleteGroup: (id: number) => void;
+  addHandTile: (data: TileData) => void;
+  removeHandTile: (index: number) => void;
 }
 
 export const useRumbleStore = create<RumbleState>((set) => ({
@@ -37,6 +42,14 @@ export const useRumbleStore = create<RumbleState>((set) => ({
     set((_state) => ({
       milestone: milestone,
     }));
+  },
+  setMeData: (meData: MeData) => {
+    set((state) => {
+      const milestone = state.milestone as GameMilestone;
+      return {
+        milestone: { ...milestone, me: meData },
+      };
+    });
   },
   setServerNow: (serverNow: number) => {
     set((_state) => ({
@@ -98,6 +111,28 @@ export const useRumbleStore = create<RumbleState>((set) => ({
       milestone.groups.delete(id);
       return {
         milestone,
+      };
+    });
+  },
+  addHandTile: (data: TileData) => {
+    set((state) => {
+      const milestone = state.milestone as GameMilestone;
+      const meData = milestone.me;
+      meData.hand.push(data);
+
+      return {
+        milestone: { ...milestone, me: meData },
+      };
+    });
+  },
+  removeHandTile: (index: number) => {
+    set((state) => {
+      const milestone = state.milestone as GameMilestone;
+      const meData = milestone.me;
+      meData.hand.splice(index, 1);
+
+      return {
+        milestone: { ...milestone, me: meData },
       };
     });
   },
